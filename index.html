@@ -102,6 +102,15 @@ input,select{font:inherit}
 .pump .ml{display:flex;gap:6px;flex:1}
 .pump input{width:50%;border:1.5px solid #f3cfb6;border-radius:14px;text-align:center;font-size:16px;background:#fff;color:#8a3b12;min-width:0}
 .pump .add{flex:1;background:#e9a37a;color:#fff;border-radius:14px;font-size:15px;font-weight:500}
+.pump .ml{flex:0 0 auto;min-height:46px}
+.pses{display:flex;gap:5px;align-items:center}
+.pses span{font-size:13px;white-space:nowrap}
+.pses button{flex:1;border:1.5px solid #f3cfb6;background:#fff;border-radius:12px;padding:7px 0;color:#8a3b12;font-weight:500}
+.pcount{border-radius:14px;background:#e9a37a;color:#fff;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;animation:pulse 1.6s infinite}
+.pcount b{font-size:24px;direction:ltr}.pcount small{font-size:12px;opacity:.9}
+.pcount.done{background:#2f9e6a}
+.ptimer{border:1.5px solid #f3cfb6;background:#fff;border-radius:12px;padding:7px 0;color:#8a3b12;font-size:14px;font-weight:500}
+.pcount[hidden],.pses[hidden],.ptimer[hidden]{display:none}
 .wide2{grid-column:1 / -1;min-height:0}
 .meds .chip{background:var(--gry-btn);border-color:var(--gry-line);min-height:74px}
 .meds .chip b{font-weight:500}.meds .chip small{font-size:12px;opacity:.7}
@@ -245,6 +254,12 @@ label.check input{width:20px;height:20px;margin:0}
           <input id="pumpMl" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="600">
           <button class="add" id="pumpBtn">הוספה</button>
         </div>
+        <div class="pses" id="pumpIdle">
+          <span>⏱ סשן</span>
+          <button data-pmin="17">17</button><button data-pmin="12">12</button><button data-pmin="7">7</button>
+        </div>
+        <button class="pcount" id="pumpRun" hidden><b id="pcClock">00:00</b><small id="pcSub"></small></button>
+        <button class="ptimer" id="pumpPhoneTimer" hidden>⏰ טיימר בטלפון</button>
       </div>
 
       <div class="tile sleep">
@@ -358,6 +373,22 @@ label.check input{width:20px;height:20px;margin:0}
 </section>
 
 <!-- ===== SHEETS ===== -->
+<div class="overlay" id="pumpEndSheet"><div class="sheet">
+  <h3>סיום שאיבה</h3>
+  <p class="note" id="peInfo"></p>
+  <div class="sides" id="peSides" style="display:flex;gap:6px;margin-top:4px">
+    <button class="btn sec" style="margin:0" data-peside="ימין">ימין</button>
+    <button class="btn sec" style="margin:0" data-peside="שמאל">שמאל</button>
+    <button class="btn sec" style="margin:0" data-peside="שניהם">שניהם</button>
+  </div>
+  <label>כמה מ״ל נשאבו בסך הכול?</label>
+  <input id="peMl" type="number" inputmode="numeric" min="1" max="600" placeholder="מ״ל">
+  <div class="mlpick"><button data-peml="50">50</button><button data-peml="80">80</button><button data-peml="100">100</button><button data-peml="120">120</button><button data-peml="150">150</button></div>
+  <button class="btn" id="peSave">שמירה</button>
+  <button class="btn sec" id="peBack">חזרה</button>
+  <button class="btn danger" id="peDiscard">ביטול הסשן בלי לשמור</button>
+</div></div>
+
 <div class="overlay" id="bottleEndSheet"><div class="sheet">
   <h3>סיום האכלה בבקבוק</h3>
   <div class="clock" id="beClock">00:00</div>
@@ -557,7 +588,7 @@ const TIMED=['breast','sleep','tummy'];
 const toLocal=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
 function editFields(){
   const t=$('#editType').value;
-  const show={end:TIMED.includes(t)||t==='bottle',side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
+  const show={end:TIMED.includes(t)||t==='bottle'||t==='pump',side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
   $$('#editSheet [data-f]').forEach(el=>el.style.display=show[el.dataset.f]?'':'none');
   $('#lblStart').textContent=TIMED.includes(t)?'שעת התחלה':'שעה';
 }
@@ -590,7 +621,7 @@ $('#editSave').onclick=()=>{
     if(!end||end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
     e.end=end;
   }
-  if(type==='bottle'&&$('#editEnd').value){   // bottle session: end time is optional
+  if((type==='bottle'||type==='pump')&&$('#editEnd').value){   // sessions: end time is optional
     const end=new Date($('#editEnd').value).getTime();
     if(end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
     e.end=end;
@@ -669,6 +700,7 @@ function render(){
 
   renderSides();
   if($('#bottleSession'))renderBottleSession();
+  if($('#pumpRun'))renderPumpSession();
   timerBtn('breast','#feedBtn','#feedLabel','#feedSub','הנקה','סיום הנקה');
   timerBtn('sleep','#sleepBtn','#sleepLabel','#sleepSub','נרדם/ה','התעורר/ה');
   timerBtn('tummy','#tummyBtn','#tummyLabel','#tummySub','התחלה','סיום');
@@ -811,9 +843,96 @@ $('#beDiscard').onclick=()=>{
   $('#bottleEndSheet').classList.remove('show');save();
   toast('הסשן בוטל',()=>{state.timers.bottle=r;state.timersMod=Date.now();save();});
 };
+/* ================= pumping session with countdown ================= */
+let audioCtx=null,peSide='שניהם';
+function beep(){
+  try{if(!audioCtx)return;const now=audioCtx.currentTime;
+    [0,0.35,0.7].forEach(d=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=880;
+      g.gain.setValueAtTime(0.0001,now+d);g.gain.exponentialRampToValueAtTime(0.4,now+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,now+d+0.3);
+      o.connect(g);g.connect(audioCtx.destination);o.start(now+d);o.stop(now+d+0.32);});}catch(e){}
+}
+async function pumpAlert(r){
+  try{localStorage.setItem('babylog.pumpAlerted',String(r.t));}catch(e){}
+  if(navigator.vibrate)navigator.vibrate([500,200,500,200,500]);
+  beep();
+  const text=`השאיבה הסתיימה (${Math.round(r.len/60000)} דק׳). רשמו כמה מ״ל נשאבו.`;
+  if('Notification' in window&&Notification.permission==='granted'){
+    let shown=false;
+    try{const reg=await navigator.serviceWorker?.getRegistration();
+      if(reg){await reg.showNotification('⏰ השאיבה הסתיימה',{body:text,icon:'icon-192.png',vibrate:[500,200,500],tag:'pump',renotify:true,requireInteraction:true});shown=true;}}catch(e){}
+    if(!shown){try{new Notification('⏰ השאיבה הסתיימה',{body:text,icon:'icon-192.png'});}catch(e){}}
+  }
+  toast('⏰ '+text);openPumpEnd();
+}
+function alreadyAlerted(r){try{return localStorage.getItem('babylog.pumpAlerted')===String(r.t);}catch(e){return false;}}
+function renderPumpSession(){
+  const r=state.timers.pump,run=$('#pumpRun');if(!run)return;
+  $('#pumpIdle').hidden=!!r;run.hidden=!r;
+  const left=r?r.t+r.len-Date.now():0;
+  $('#pumpPhoneTimer').hidden=!r||left<=0;
+  if(!r)return;
+  run.classList.toggle('done',left<=0);
+  $('#pcClock').textContent=left>0?clock(left):'הזמן נגמר';
+  $('#pcSub').textContent=left>0?`התחלה ${hm(r.t)} · לחצו לסיום`:'לחצו לתיעוד הכמות';
+  if(left<=0&&!alreadyAlerted(r))pumpAlert(r);
+  if($('#pumpEndSheet').classList.contains('show'))$('#peInfo').textContent=peInfoText(r);
+}
+const peInfoText=r=>{const end=Math.min(Date.now(),r.t+r.len);return `התחלה ${hm(r.t)} · משך ${clock(end-r.t)} מתוך ${Math.round(r.len/60000)} דק׳`;};
+function openPumpEnd(){
+  const r=state.timers.pump;if(!r)return;
+  peSide=(r.extra&&r.extra.side)||pside||'שניהם';
+  $$('[data-peside]').forEach(b=>b.classList.toggle('sel-side',b.dataset.peside===peSide));
+  $$('[data-peside]').forEach(b=>b.style.cssText='margin:0;'+(b.dataset.peside===peSide?'background:#8a3b12;color:#fff':''));
+  $('#peInfo').textContent=peInfoText(r);
+  if(!$('#pumpEndSheet').classList.contains('show')){$('#peMl').value='';$('#pumpEndSheet').classList.add('show');}
+}
+$$('[data-pmin]').forEach(b=>b.onclick=()=>{
+  try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
+  if('Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission().catch(()=>{});}catch(e){}}
+  const min=+b.dataset.pmin;
+  state.timers.pump={t:Date.now(),len:min*60000,extra:{side:pside}};state.timersMod=Date.now();save();
+  toast(`🥛 שאיבה התחילה · ${min} דק׳`,()=>{delete state.timers.pump;state.timersMod=Date.now();save();});
+  if(navigator.vibrate)navigator.vibrate(30);renderPumpSession();
+});
+$('#pumpRun').onclick=openPumpEnd;
+// hand the remaining time to the phone's own clock app, which rings even when the screen is locked
+$('#pumpPhoneTimer').onclick=()=>{
+  const r=state.timers.pump;if(!r)return;
+  const sec=Math.round((r.t+r.len-Date.now())/1000);if(sec<5)return;
+  const url='intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH='+sec+
+    ';S.android.intent.extra.alarm.MESSAGE='+encodeURIComponent('שאיבה')+';B.android.intent.extra.alarm.SKIP_UI=true;end';
+  let left=false;const onHide=()=>{if(document.hidden)left=true;};
+  document.addEventListener('visibilitychange',onHide);
+  location.href=url;
+  setTimeout(()=>{document.removeEventListener('visibilitychange',onHide);
+    if(!left)toast(`הטלפון לא פתח טיימר אוטומטית. פתחו את השעון וכוונו טיימר ל-${Math.ceil(sec/60)} דק׳`);
+    else toast(`⏰ טיימר של ${Math.ceil(sec/60)} דק׳ כוון בשעון`);},1800);
+};
+$$('[data-peside]').forEach(b=>b.onclick=()=>{peSide=b.dataset.peside;
+  $$('[data-peside]').forEach(x=>x.style.cssText='margin:0;'+(x===b?'background:#8a3b12;color:#fff':''));});
+$$('[data-peml]').forEach(b=>b.onclick=()=>{$('#peMl').value=b.dataset.peml;});
+$('#peBack').onclick=()=>$('#pumpEndSheet').classList.remove('show');
+$('#peSave').onclick=()=>{
+  const r=state.timers.pump;if(!r){$('#pumpEndSheet').classList.remove('show');return;}
+  const ml=parseInt($('#peMl').value,10);
+  if(!ml||ml<1){$('#peMl').focus();toast('הזינו כמה מ״ל נשאבו');return;}
+  delete state.timers.pump;state.timersMod=Date.now();
+  const e={id:uid(),type:'pump',t:r.t,end:Math.min(Date.now(),r.t+r.len),ml,side:peSide,mod:Date.now()};
+  state.entries.push(e);$('#pumpEndSheet').classList.remove('show');save();
+  toast(`🥛 שאיבה ${ml} מ״ל · התחלה ${hm(e.t)}`,()=>{state.timers.pump=r;state.timersMod=Date.now();removeEntry(e.id);});
+};
+$('#peDiscard').onclick=()=>{
+  const r=state.timers.pump;delete state.timers.pump;state.timersMod=Date.now();
+  $('#pumpEndSheet').classList.remove('show');save();
+  toast('סשן השאיבה בוטל',()=>{state.timers.pump=r;state.timersMod=Date.now();save();});
+};
+// when the app comes back to the screen, catch a countdown that ended meanwhile
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderPumpSession();});
+
 // live clocks for every running timer, once a second
 setInterval(()=>{
   renderBottleSession();
+  renderPumpSession();
   [['breast','#feedSub'],['sleep','#sleepSub'],['tummy','#tummySub']].forEach(([k,s])=>{
     const r=state.timers[k];if(r)$(s).textContent=`מ-${hm(r.t)} · ${clock(Date.now()-r.t)}`;});
 },1000);
