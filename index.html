@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f8ff">
+<title>יומן תינוק</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f8ff; --card:#fff; --line:#dbe4f5; --ink:#1f2430; --muted:#6b7385;
+  --pink-bg:#fcf0f6; --pink-btn:#f6e4ef; --pink-ink:#8a2153; --pink-line:#efc9dc;
+  --yel-bg:#fffaea; --yel-btn:#fdf0c8; --yel-ink:#8a4a10; --yel-line:#f3dc96;
+  --vio-bg:#eef0fd; --vio-btn:#e1e5fb; --vio-ink:#2e3592; --vio-line:#c5cbf4;
+  --tea-bg:#effbf8; --tea-btn:#8fdbd0; --tea-ink:#1d5e57; --tea-line:#b6ebe2;
+  --grn-bg:#effbf1; --grn-btn:#ddf7e3; --grn-ink:#1c6a33; --grn-line:#b4e6c1;
+  --gry-bg:#f6f7fa; --gry-btn:#eef0f4; --gry-ink:#222; --gry-line:#dfe2e9;
+  --pur-bg:#f1e9fd; --pur-ink:#5b2a9b; --pur-line:#dcc9f7;
+  --blue:#3b6fe0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
+body{padding:12px 16px 90px;max-width:560px;margin:0 auto}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit}
+
+/* top icon bar */
+.topbar{display:flex;justify-content:space-between;gap:6px;margin:4px 0 18px}
+.ic{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:0 2px 6px rgba(40,60,120,.06)}
+.ic svg{width:22px;height:22px}
+.ic.active{outline:2px solid var(--blue)}
+
+/* header */
+.hero{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:20px}
+.avatar{width:104px;height:104px;border-radius:50%;padding:7px;border:3px solid #a9c4f5;background:#fff;
+  box-shadow:0 6px 18px rgba(60,100,200,.15)}
+.avatar>div{width:100%;height:100%;border-radius:24px;background:#f3b4b8;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px;line-height:1}
+.avatar .face{font-size:34px;margin-bottom:2px}
+.who h1{margin:0;font-size:38px;font-weight:700;letter-spacing:-.5px}
+.who .age{color:var(--blue);font-size:19px}
+.sync{width:64px;height:64px;border-radius:50%;background:#fff;border:3px solid #cddcf7;position:relative;
+  display:grid;place-items:center;box-shadow:0 4px 12px rgba(60,100,200,.12)}
+.sync svg{width:26px;height:26px}
+.sync .badge{position:absolute;top:-8px;left:-8px;background:#e45656;color:#fff;font-size:12px;font-weight:700;
+  border-radius:12px;padding:3px 8px;min-width:24px;text-align:center}
+.sync .dot{position:absolute;bottom:2px;right:2px;width:13px;height:13px;border-radius:50%;border:2px solid #fff;background:#bbb}
+.sync .dot.on{background:#2fb36a}.sync .dot.busy{background:#f1b52b}.sync .dot.err{background:#e45656}
+
+/* board */
+.board{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:150px}
+.tile h2{margin:0;font-size:17px;font-weight:700;text-align:center}
+.big{flex:1;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  font-size:17px;border:1.5px solid;box-shadow:0 3px 8px rgba(0,0,0,.05);transition:transform .08s}
+.big:active,.chip:active,.add:active{transform:scale(.96)}
+.big svg{width:24px;height:24px}
+.big small{font-size:12px;opacity:.75}
+.row{display:flex;gap:6px;justify-content:center;flex:1}
+.chip{flex:1;border-radius:16px;border:1.5px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;font-size:14px;padding:8px 2px}
+.chip svg{width:22px;height:22px}
+
+.feed{background:var(--pink-bg);color:var(--pink-ink)} .feed .big{background:var(--pink-btn);border-color:var(--pink-line)}
+.feed .sides{display:flex;gap:6px}
+.feed .sides button{flex:1;border-radius:12px;border:1.5px solid var(--pink-line);background:#fff;padding:6px 0;font-size:13px}
+.feed .sides button.sel{background:var(--pink-ink);color:#fff;border-color:var(--pink-ink)}
+.diaper{background:var(--yel-bg);color:var(--yel-ink)} .diaper .chip{background:var(--yel-btn);border-color:var(--yel-line)}
+.sleep{background:var(--vio-bg);color:var(--vio-ink)} .sleep .big{background:var(--vio-btn);border-color:var(--vio-line)}
+.bottle{background:var(--tea-bg);color:var(--tea-ink)}
+.bottle .ml{display:flex;gap:6px;align-items:stretch;flex:1}
+.bottle input{width:44%;border:1.5px solid var(--tea-line);border-radius:14px;text-align:center;font-size:18px;background:#fff;color:var(--tea-ink);min-width:0}
+.bottle .add{flex:1;background:var(--tea-btn);color:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:500}
+.bottle .presets{display:flex;gap:4px}
+.bottle .presets button{flex:1;border:1px solid var(--tea-line);background:#fff;border-radius:10px;font-size:12px;padding:4px 0;color:var(--tea-ink)}
+.tummy{background:var(--grn-bg);color:var(--grn-ink)} .tummy .big{background:var(--grn-btn);border-color:var(--grn-line)}
+.meds{background:var(--gry-bg);color:var(--gry-ink)} .meds .big{background:var(--gry-btn);border-color:var(--gry-line)}
+.running{animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(80,90,200,.12)}}
+
+.wide{margin-top:14px;width:100%;border-radius:20px;padding:16px;display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:17px;border:1.5px solid}
+.wide svg{width:22px;height:22px}
+.remind{background:var(--pur-bg);color:var(--pur-ink);border-color:var(--pur-line)}
+.histbtn{background:#fff4e3;color:#8a4a10;border-color:#f6d9a8}
+
+/* summary */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 4px}
+.summary div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 4px;text-align:center}
+.summary b{display:block;font-size:18px}
+.summary span{font-size:11px;color:var(--muted)}
+.since{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
+
+/* views */
+.view{display:none}.view.show{display:block}
+.vhead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+.vhead h2{margin:0;font-size:22px}
+.back{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.filters button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 12px;font-size:14px}
+.filters button.sel{background:var(--blue);color:#fff;border-color:var(--blue)}
+.day{font-weight:700;color:var(--muted);font-size:14px;margin:16px 4px 6px}
+.item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:6px}
+.item .em{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.item .tx{flex:1;min-width:0}
+.item .tx b{display:block;font-weight:500}
+.item .tx span{font-size:13px;color:var(--muted)}
+.item .tm{font-size:15px;color:var(--muted);direction:ltr}
+.item .del{color:#c44;padding:6px;font-size:18px}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:17px}
+.card label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+.card input,.card select{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfcff}
+.btn{background:var(--blue);color:#fff;border-radius:12px;padding:11px 16px;margin-top:12px;width:100%;font-weight:500}
+.btn.sec{background:#eef2fb;color:var(--blue)}
+.btn.danger{background:#fdeeee;color:#c33}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* sheet / dialog */
+.overlay{position:fixed;inset:0;background:rgba(20,25,40,.35);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:18px 16px 28px;max-height:85vh;overflow:auto}
+.sheet h3{margin:0 0 12px}
+.sheet label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+.sheet input,.sheet select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px;background:#fbfcff}
+.medchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.medchips button{border:1px solid var(--line);border-radius:16px;padding:6px 12px;background:#f6f8fd}
+
+label.check{display:flex;align-items:center;gap:8px;color:var(--ink);margin-top:14px}
+label.check input{width:20px;height:20px;margin:0}
+.rem{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-top:8px;font-size:14px}
+.rem button{color:#c33;font-size:13px}
+.rangebar{display:flex;gap:6px;margin-bottom:12px}
+.rangebar button{flex:1;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 0}
+.rangebar button.sel{background:var(--blue);color:#fff;border-color:var(--blue)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:#222a3b;color:#fff;
+  border-radius:14px;padding:12px 16px;display:flex;gap:14px;align-items:center;transition:transform .25s;z-index:30;
+  max-width:92vw;font-size:15px}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast button{color:#9fc0ff;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ===== HOME ===== -->
+<section id="home" class="view show">
+  <div class="topbar">
+    <button class="ic" data-go="settings" aria-label="הגדרות"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="ic" data-go="history" aria-label="היסטוריה"><svg viewBox="0 0 24 24" fill="none" stroke="#3b6fe0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
+    <button class="ic" data-go="stats" aria-label="סיכום"><svg viewBox="0 0 24 24" fill="none" stroke="#2f9e6a" stroke-width="2" stroke-linecap="round"><path d="M4 20h16"/><path d="M7 16V9"/><path d="M12 16V5"/><path d="M17 16v-4"/></svg></button>
+    <button class="ic" id="exportBtn" aria-label="ייצוא"><svg viewBox="0 0 24 24" fill="none" stroke="#8a4fd8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+  </div>
+
+  <div class="hero">
+    <button class="sync" id="syncBtn" aria-label="סנכרון לגוגל דרייב">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3b6fe0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.3 12 4 4 0 0 0 6 19.9"/><path d="M12 13v8"/><path d="m9 16 3-3 3 3"/></svg>
+      <span class="badge" id="countBadge">0</span>
+      <span class="dot" id="syncDot"></span>
+    </button>
+    <div class="who">
+      <h1 id="babyName">התינוק/ת</h1>
+      <div class="age" id="babyAge"></div>
+    </div>
+    <div class="avatar"><div><span class="face">👶</span><span id="avatarText"></span></div></div>
+  </div>
+
+  <div class="board">
+    <div class="grid">
+      <div class="tile feed">
+        <h2>האכלה · הנקה</h2>
+        <div class="sides">
+          <button data-side="ימין">ימין</button>
+          <button data-side="שמאל">שמאל</button>
+        </div>
+        <button class="big" id="feedBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          <span id="feedLabel">הנקה</span><small id="feedSub"></small>
+        </button>
+      </div>
+
+      <div class="tile diaper">
+        <h2>החתלה</h2>
+        <div class="row">
+          <button class="chip" data-diaper="pee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.7s6 6.4 6 11.3a6 6 0 0 1-12 0c0-4.9 6-11.3 6-11.3z"/></svg>פיפי</button>
+          <button class="chip" data-diaper="poo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9z"/></svg>קקי</button>
+          <button class="chip" data-diaper="both"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9.9 4.6 12 2l2.1 2.6L17 3.5l-.3 3.3 3.3.3-1.1 2.9L21.5 12l-2.6 2.1 1.1 2.9-3.3.3.3 3.3-2.9-1.1L12 22l-2.1-2.6L7 20.5l.3-3.3-3.3-.3 1.1-2.9L2.5 12l2.6-2.1L4 7l3.3-.3L7 3.5z"/></svg>גם וגם</button>
+        </div>
+      </div>
+
+      <div class="tile bottle">
+        <h2>בקבוק</h2>
+        <div class="presets">
+          <button data-ml="60">60</button><button data-ml="90">90</button><button data-ml="120">120</button><button data-ml="150">150</button>
+        </div>
+        <div class="ml">
+          <input id="mlInput" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="400">
+          <button class="add" id="bottleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M10 2h4M10 2v3l-2 3v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8 12h8"/></svg>הוספה</button>
+        </div>
+      </div>
+
+      <div class="tile sleep">
+        <h2>שינה</h2>
+        <button class="big" id="sleepBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+          <span id="sleepLabel">נרדם/ה</span><small id="sleepSub"></small>
+        </button>
+      </div>
+
+      <div class="tile tummy">
+        <h2>זמן בטן</h2>
+        <button class="big" id="tummyBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path id="tummyIcon" d="M6 3l14 9-14 9z"/></svg>
+          <span id="tummyLabel">התחלה</span><small id="tummySub"></small>
+        </button>
+      </div>
+
+      <div class="tile meds">
+        <h2>תרופות</h2>
+        <button class="big" id="medBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="m8.5 8.5 7 7"/></svg>
+          <span>מתן תרופה</span><small id="medSub"></small>
+        </button>
+      </div>
+    </div>
+
+    <div class="summary" id="todaySummary"></div>
+    <div class="since" id="sinceLine"></div>
+
+    <button class="wide histbtn" data-go="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>כל התיעודים</button>
+    <button class="wide remind" id="remindBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>יצירת תזכורת</button>
+  </div>
+</section>
+
+<!-- ===== HISTORY ===== -->
+<section id="history" class="view">
+  <div class="vhead"><h2>כל התיעודים</h2><button class="back" data-go="home">חזרה</button></div>
+  <div class="filters" id="filters"></div>
+  <button class="wide histbtn" id="manualAdd" style="margin:0 0 6px">＋ הוספת תיעוד שנשכח</button>
+  <div id="histList"></div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section id="stats" class="view">
+  <div class="vhead"><h2>סיכום</h2><button class="back" data-go="home">חזרה</button></div>
+  <div class="rangebar" id="rangebar"></div>
+  <div id="statsBody"></div>
+</section>
+
+<!-- ===== SETTINGS ===== -->
+<section id="settings" class="view">
+  <div class="vhead"><h2>הגדרות</h2><button class="back" data-go="home">חזרה</button></div>
+  <div class="card">
+    <h3>פרטי התינוק/ת</h3>
+    <label>שם</label><input id="setName" placeholder="למשל: תמיר">
+    <label>תאריך לידה</label><input id="setBirth" type="date">
+    <button class="btn" id="saveProfile">שמירה</button>
+  </div>
+  <div class="card">
+    <h3>חיבור לגוגל דרייב (דרך השרת)</h3>
+    <p class="note" id="driveStatus">לא מחובר</p>
+    <label>כתובת השרת (Web app URL)</label>
+    <input id="setUrl" dir="ltr" placeholder="https://script.google.com/macros/s/.../exec">
+    <label>קוד גישה</label>
+    <input id="setKey" dir="ltr" placeholder="מגיע במייל מהשרת">
+    <button class="btn" id="connectDrive">חיבור ובדיקה</button>
+    <button class="btn sec" id="syncNow">סנכרון עכשיו</button>
+    <button class="btn sec" id="disconnectDrive">התנתקות</button>
+    <p class="note">הנתונים נשמרים בקובץ <b dir="ltr">baby-log.json</b> בדרייב של החשבון שבו הותקן השרת. כל מכשיר שמתחבר עם אותה כתובת וקוד רואה את אותם נתונים. בלי חיבור, הכול נשמר במכשיר.</p>
+  </div>
+  <div class="card">
+    <h3>התראות במייל</h3>
+    <p class="note">דורש חיבור לשרת. השרת בודק כל 5 דקות ושולח מייל גם כשהטלפון כבוי.</p>
+    <label>כתובות מייל לקבלת התראות (אפשר כמה, מופרדות בפסיק)</label>
+    <input id="setEmail" dir="ltr" type="text" placeholder="ריק = המייל של חשבון הגוגל">
+    <label>התראה אם לא הייתה האכלה במשך</label>
+    <select id="setFeedHours">
+      <option value="0">כבוי</option><option value="2">שעתיים</option><option value="2.5">שעתיים וחצי</option>
+      <option value="3">3 שעות</option><option value="3.5">3.5 שעות</option><option value="4">4 שעות</option><option value="5">5 שעות</option>
+    </select>
+    <button class="btn" id="saveAlerts">שמירת הגדרות התראה</button>
+  </div>
+  <div class="card">
+    <h3>תרופות שמורות</h3>
+    <p class="note">שמות שהוזנו נשמרים אוטומטית לבחירה מהירה.</p>
+    <div class="medchips" id="savedMeds"></div>
+  </div>
+  <div class="card">
+    <h3>נתונים</h3>
+    <button class="btn sec" id="exportCsv">ייצוא ל-CSV</button>
+    <button class="btn danger" id="wipe">מחיקת כל התיעודים מהמכשיר</button>
+  </div>
+</section>
+
+<!-- ===== SHEETS ===== -->
+<div class="overlay" id="medSheet"><div class="sheet">
+  <h3>מתן תרופה</h3>
+  <div class="medchips" id="medQuick"></div>
+  <label>שם התרופה</label><input id="medName" placeholder="למשל: ויטמין D">
+  <label>מינון (לא חובה)</label><input id="medDose" placeholder="למשל: 2 טיפות">
+  <button class="btn" id="medSave">תיעוד</button>
+  <button class="btn sec" data-close>ביטול</button>
+</div></div>
+
+<div class="overlay" id="editSheet"><div class="sheet">
+  <h3 id="editTitle">עריכת תיעוד</h3>
+  <label>סוג</label>
+  <select id="editType">
+    <option value="breast">הנקה</option><option value="bottle">בקבוק</option>
+    <option value="pee">פיפי</option><option value="poo">קקי</option><option value="both">פיפי + קקי</option>
+    <option value="sleep">שינה</option><option value="tummy">זמן בטן</option><option value="med">תרופה</option>
+  </select>
+  <label id="lblStart">שעה</label><input id="editTime" type="datetime-local">
+  <div data-f="end"><label>שעת סיום</label><input id="editEnd" type="datetime-local"></div>
+  <div data-f="side"><label>צד</label><select id="editSide"><option value="">לא צוין</option><option>ימין</option><option>שמאל</option></select></div>
+  <div data-f="ml"><label>כמות (מ״ל)</label><input id="editMl" type="number" inputmode="numeric" min="1"></div>
+  <div data-f="med"><label>שם התרופה</label><input id="editMed"><label>מינון</label><input id="editDose"></div>
+  <label>הערה</label><input id="editNote" placeholder="הערה חופשית">
+  <button class="btn" id="editSave">שמירה</button>
+  <button class="btn danger" id="editDel">מחיקה</button>
+  <button class="btn sec" data-close>ביטול</button>
+</div></div>
+
+<div class="overlay" id="remindSheet"><div class="sheet">
+  <h3>תזכורת</h3>
+  <label>להזכיר בעוד</label>
+  <select id="remindMin">
+    <option value="60">שעה</option><option value="90">שעה וחצי</option><option value="120" selected>שעתיים</option>
+    <option value="150">שעתיים וחצי</option><option value="180">3 שעות</option><option value="240">4 שעות</option>
+  </select>
+  <label>על מה</label><input id="remindText" value="האכלה">
+  <label class="check"><input type="checkbox" id="remindEmail" checked> לשלוח גם מייל (דרך השרת)</label>
+  <button class="btn" id="remindSave">הפעלת תזכורת</button>
+  <div id="remindList"></div>
+  <p class="note" id="remindNote"></p>
+  <button class="btn sec" data-close>סגירה</button>
+</div></div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">ביטול</button></div>
+
+<script>
+/* ================= data ================= */
+const KEY='babylog.v1';
+const TYPES={
+  breast:{name:'הנקה',em:'🤱',bg:'#f6e4ef'},
+  pee:{name:'פיפי',em:'💧',bg:'#fdf0c8'},
+  poo:{name:'קקי',em:'💩',bg:'#fdf0c8'},
+  both:{name:'פיפי + קקי',em:'✨',bg:'#fdf0c8'},
+  bottle:{name:'בקבוק',em:'🍼',bg:'#c9efe9'},
+  sleep:{name:'שינה',em:'😴',bg:'#e1e5fb'},
+  tummy:{name:'זמן בטן',em:'🧸',bg:'#ddf7e3'},
+  med:{name:'תרופה',em:'💊',bg:'#eef0f4'}
+};
+let state=load();
+function load(){
+  const base={profile:{name:'',birth:''},entries:[],meds:[],timers:{},deleted:[],updated:0,lastSide:'',
+    reminders:[],alerts:{email:'',feedHours:0,mod:0}};
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.entries)return {...base,...s,alerts:{...base.alerts,...(s.alerts||{})}};}catch(e){}
+  return base;
+}
+// ask the browser not to evict local data
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+function save(sync=true){
+  state.updated=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+  render();
+  if(sync) scheduleSync();
+}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function addEntry(type,extra={}){
+  const e={id:uid(),type,t:Date.now(),mod:Date.now(),...extra};
+  state.entries.push(e);save();
+  toast(`${TYPES[type].em} נרשם: ${TYPES[type].name}${extra.ml?' '+extra.ml+' מ״ל':''}`,()=>removeEntry(e.id));
+  if(navigator.vibrate)navigator.vibrate(30);
+  return e;
+}
+function removeEntry(id){
+  state.entries=state.entries.filter(x=>x.id!==id);
+  state.deleted.push(id);save();
+}
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const pad=n=>String(n).padStart(2,'0');
+const hm=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes());};
+function dur(ms){const m=Math.round(ms/60000);if(m<60)return m+' דק׳';const h=Math.floor(m/60);return h+' ש׳'+(m%60?' '+(m%60)+' דק׳':'');}
+function ago(t){const m=Math.floor((Date.now()-t)/60000);if(m<1)return 'עכשיו';if(m<60)return `לפני ${m} דק׳`;const h=Math.floor(m/60);return `לפני ${h} ש׳ ${m%60?m%60+' דק׳':''}`;}
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+function dayLabel(k){
+  const today=dayKey(Date.now()),y=dayKey(Date.now()-864e5);
+  if(k===today)return 'היום';if(k===y)return 'אתמול';
+  const [Y,M,D]=k.split('-');const d=new Date(Y,M-1,D);
+  return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
+}
+function describe(e){
+  const p=[];
+  if(e.side)p.push('צד '+e.side);
+  if(e.ml)p.push(e.ml+' מ״ל');
+  if(e.end)p.push(dur(e.end-e.t)+' ('+hm(e.t)+'–'+hm(e.end)+')');
+  if(e.med)p.push(e.med+(e.dose?' · '+e.dose:''));
+  if(e.note)p.push(e.note);
+  return p.join(' · ');
+}
+let toastTimer;
+function toast(msg,undo){
+  $('#toastMsg').textContent=msg;
+  const u=$('#toastUndo');u.style.display=undo?'':'none';
+  u.onclick=()=>{undo&&undo();$('#toast').classList.remove('show');};
+  $('#toast').classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),4000);
+}
+
+/* ================= navigation ================= */
+function go(v){$$('.view').forEach(x=>x.classList.toggle('show',x.id===v));window.scrollTo(0,0);
+  if(v==='settings')fillSettings();render();}
+$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$$('[data-close]').forEach(b=>b.onclick=()=>b.closest('.overlay').classList.remove('show'));
+$$('.overlay').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('show');});
+
+/* ================= actions ================= */
+let side=state.lastSide||'';
+$$('[data-side]').forEach(b=>b.onclick=()=>{side=side===b.dataset.side?'':b.dataset.side;renderSides();});
+function renderSides(){$$('[data-side]').forEach(b=>b.classList.toggle('sel',b.dataset.side===side));}
+
+// breastfeeding: tap to start timer, tap again to stop & log
+$('#feedBtn').onclick=()=>toggleTimer('breast',{side});
+$('#sleepBtn').onclick=()=>toggleTimer('sleep');
+$('#tummyBtn').onclick=()=>toggleTimer('tummy');
+function toggleTimer(type,extra={}){
+  const running=state.timers[type];
+  if(running){
+    delete state.timers[type];state.timersMod=Date.now();
+    const e={id:uid(),type,t:running.t,end:Date.now(),mod:Date.now(),...running.extra};
+    if(type==='breast'&&side)e.side=side;
+    state.entries.push(e);
+    if(type==='breast'&&e.side){state.lastSide=e.side;side=e.side==='ימין'?'שמאל':'ימין';}
+    save();
+    toast(`${TYPES[type].em} ${TYPES[type].name}: ${dur(e.end-e.t)}`,()=>{state.timers[type]=running;state.timersMod=Date.now();removeEntry(e.id);});
+  }else{
+    state.timers[type]={t:Date.now(),extra};state.timersMod=Date.now();save();
+    toast(`${TYPES[type].em} ${TYPES[type].name} התחיל/ה`,()=>{delete state.timers[type];state.timersMod=Date.now();save();});
+  }
+  if(navigator.vibrate)navigator.vibrate(30);
+}
+$$('[data-diaper]').forEach(b=>b.onclick=()=>addEntry(b.dataset.diaper));
+$$('[data-ml]').forEach(b=>b.onclick=()=>{$('#mlInput').value=b.dataset.ml;});
+$('#bottleBtn').onclick=()=>{
+  const ml=parseInt($('#mlInput').value,10);
+  if(!ml||ml<1){$('#mlInput').focus();toast('הזינו כמות במ״ל');return;}
+  addEntry('bottle',{ml});$('#mlInput').value='';
+};
+$('#medBtn').onclick=()=>{
+  $('#medName').value='';$('#medDose').value='';
+  $('#medQuick').innerHTML='';
+  state.meds.forEach(m=>{const b=document.createElement('button');b.textContent='💊 '+m.name+(m.dose?' · '+m.dose:'');
+    b.onclick=()=>{$('#medSheet').classList.remove('show');addEntry('med',{med:m.name,dose:m.dose||''});};$('#medQuick').appendChild(b);});
+  $('#medSheet').classList.add('show');
+};
+$('#medSave').onclick=()=>{
+  const name=$('#medName').value.trim(),dose=$('#medDose').value.trim();
+  if(!name){$('#medName').focus();return;}
+  state.meds=state.meds.filter(m=>m.name!==name);state.meds.unshift({name,dose});state.meds=state.meds.slice(0,8);state.medsMod=Date.now();
+  $('#medSheet').classList.remove('show');addEntry('med',{med:name,dose});
+};
+
+/* ================= edit ================= */
+let editing=null,editIsNew=false;
+const TIMED=['breast','sleep','tummy'];
+const toLocal=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+function editFields(){
+  const t=$('#editType').value;
+  const show={end:TIMED.includes(t),side:t==='breast',ml:t==='bottle',med:t==='med'};
+  $$('#editSheet [data-f]').forEach(el=>el.style.display=show[el.dataset.f]?'':'none');
+  $('#lblStart').textContent=TIMED.includes(t)?'שעת התחלה':'שעה';
+}
+$('#editType').onchange=editFields;
+function openEdit(id){
+  editIsNew=!id;
+  editing=id?state.entries.find(x=>x.id===id):{type:'breast',t:Date.now()-15*60000};
+  if(!editing)return;
+  $('#editTitle').textContent=editIsNew?'הוספת תיעוד':'עריכת תיעוד';
+  $('#editType').value=editing.type;
+  $('#editTime').value=toLocal(editing.t);
+  $('#editEnd').value=editing.end?toLocal(editing.end):(editIsNew?toLocal(Date.now()):'');
+  $('#editSide').value=editing.side||'';
+  $('#editMl').value=editing.ml||'';
+  $('#editMed').value=editing.med||'';$('#editDose').value=editing.dose||'';
+  $('#editNote').value=editing.note||'';
+  $('#editDel').style.display=editIsNew?'none':'';
+  editFields();
+  $('#editSheet').classList.add('show');
+}
+$('#manualAdd').onclick=()=>openEdit(null);
+$('#editSave').onclick=()=>{
+  if(!editing)return;
+  const type=$('#editType').value;
+  const t=new Date($('#editTime').value).getTime();
+  if(!t){toast('בחרו שעה');return;}
+  const e={id:editIsNew?uid():editing.id,type,t,mod:Date.now()};
+  if(TIMED.includes(type)){
+    const end=new Date($('#editEnd').value).getTime();
+    if(!end||end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
+    e.end=end;
+  }
+  if(type==='breast'&&$('#editSide').value)e.side=$('#editSide').value;
+  if(type==='bottle'){const ml=parseInt($('#editMl').value,10);if(!ml){toast('הזינו כמות');return;}e.ml=ml;}
+  if(type==='med'){e.med=$('#editMed').value.trim();if(!e.med){toast('הזינו שם תרופה');return;}if($('#editDose').value.trim())e.dose=$('#editDose').value.trim();}
+  const note=$('#editNote').value.trim();if(note)e.note=note;
+  const prev=editIsNew?null:{...editing};
+  state.entries=state.entries.filter(x=>x.id!==e.id);state.entries.push(e);
+  $('#editSheet').classList.remove('show');save();
+  toast(editIsNew?'התיעוד נוסף ✓':'השינוי נשמר ✓',()=>{
+    state.entries=state.entries.filter(x=>x.id!==e.id);
+    if(prev){prev.mod=Date.now();state.entries.push(prev);}else state.deleted.push(e.id);
+    save();});
+};
+$('#editDel').onclick=()=>{if(!editing||editIsNew)return;const e=editing;$('#editSheet').classList.remove('show');
+  removeEntry(e.id);toast('התיעוד נמחק',()=>{e.mod=Date.now();state.entries.push(e);state.deleted=state.deleted.filter(x=>x!==e.id);save();});};
+
+/* ================= reminders ================= */
+// reminders live in the Drive file so the server can email them
+const localTimers={};
+function pendingReminders(){return (state.reminders||[]).filter(r=>!r.cancelled&&r.due>Date.now()).sort((a,b)=>a.due-b.due);}
+function armLocal(){
+  Object.values(localTimers).forEach(clearTimeout);
+  pendingReminders().forEach(r=>{const ms=r.due-Date.now();if(ms<2**31)localTimers[r.id]=setTimeout(()=>notify(r.text),ms);});
+}
+function renderReminders(){
+  const box=$('#remindList');box.innerHTML='';
+  pendingReminders().forEach(r=>{
+    const d=document.createElement('div');d.className='rem';
+    d.innerHTML=`<span>⏰ ${hm(r.due)} · <span></span>${r.email?' · 📧':''}</span><button>ביטול</button>`;
+    d.querySelector('span span').textContent=r.text;
+    d.querySelector('button').onclick=()=>{r.cancelled=true;r.mod=Date.now();save();armLocal();renderReminders();};
+    box.appendChild(d);
+  });
+  const on=!!localStorage.getItem('babylog.driveOn');
+  $('#remindEmail').disabled=!on;
+  if(!on)$('#remindEmail').checked=false;
+  $('#remindNote').textContent=on?'המייל יישלח מהשרת גם אם האפליקציה סגורה.':'כדי לקבל מייל צריך להתחבר לגוגל דרייב בהגדרות. בינתיים התזכורת תופיע רק כשהאפליקציה פתוחה.';
+}
+$('#remindBtn').onclick=()=>{renderReminders();$('#remindSheet').classList.add('show');};
+$('#remindSave').onclick=async()=>{
+  const min=+$('#remindMin').value,text=$('#remindText').value||'תזכורת';
+  if('Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission().catch(()=>{});}catch(e){}}
+  const r={id:uid(),due:Date.now()+min*60000,text,email:$('#remindEmail').checked,created:Date.now(),mod:Date.now()};
+  state.reminders=(state.reminders||[]).filter(x=>x.due>Date.now()-30*864e5); // keep reminder list short
+  state.reminders.push(r);save();armLocal();
+  $('#remindSheet').classList.remove('show');
+  toast(`⏰ תזכורת ב-${hm(r.due)}${r.email?' + מייל':''}: ${text}`);
+};
+async function notify(text){
+  if(navigator.vibrate)navigator.vibrate([300,150,300]);
+  try{
+    if(Notification.permission==='granted'){
+      const reg=await navigator.serviceWorker?.getRegistration();
+      if(reg)reg.showNotification('יומן תינוק',{body:text,icon:'icon-192.png',vibrate:[300,150,300]});
+      else new Notification('יומן תינוק',{body:text});
+      return;
+    }
+  }catch(e){}
+  alert('⏰ '+text);
+}
+
+/* ================= render ================= */
+function render(){
+  const p=state.profile;
+  $('#babyName').textContent=p.name||'התינוק/ת';
+  $('#avatarText').textContent=(p.name||'').slice(0,3);
+  if(p.birth){const days=Math.floor((new Date().setHours(0,0,0,0)-new Date(p.birth+'T00:00').getTime())/864e5);
+    $('#babyAge').textContent=days<60?`${days} ימים`:`${Math.floor(days/7)} שבועות`;}
+  else $('#babyAge').textContent='הגדירו תאריך לידה ⚙️';
+  $('#countBadge').textContent=state.entries.length>99?'+99':state.entries.length;
+
+  renderSides();
+  timerBtn('breast','#feedBtn','#feedLabel','#feedSub','הנקה','סיום הנקה');
+  timerBtn('sleep','#sleepBtn','#sleepLabel','#sleepSub','נרדם/ה','התעורר/ה');
+  timerBtn('tummy','#tummyBtn','#tummyLabel','#tummySub','התחלה','סיום');
+  $('#tummyIcon').setAttribute('d',state.timers.tummy?'M6 4h4v16H6zM14 4h4v16h-4z':'M6 3l14 9-14 9z');
+  if(!state.timers.breast){const lb=last('breast');$('#feedSub').textContent=lb?`אחרונה ${hm(lb.t)}${lb.side?' · '+lb.side:''}`:'';}
+  const lm=last('med');$('#medSub').textContent=lm?`${lm.med} · ${hm(lm.t)}`:'';
+
+  // today summary
+  const tk=dayKey(Date.now());const today=state.entries.filter(e=>dayKey(e.t)===tk);
+  const c=t=>today.filter(e=>t.includes(e.type)).length;
+  const ml=today.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0);
+  const sl=today.filter(e=>e.type==='sleep'&&e.end).reduce((a,e)=>a+(e.end-e.t),0);
+  $('#todaySummary').innerHTML=
+    `<div><b>${c(['breast','bottle'])}</b><span>האכלות היום</span></div>`+
+    `<div><b>${ml}</b><span>מ״ל בקבוק</span></div>`+
+    `<div><b>${c(['pee','both'])}/${c(['poo','both'])}</b><span>פיפי/קקי</span></div>`+
+    `<div><b>${(sl/36e5).toFixed(1)}</b><span>שעות שינה</span></div>`;
+  const lf=lastOf(['breast','bottle']),ld=lastOf(['pee','poo','both']);
+  $('#sinceLine').textContent=[lf&&`האכלה אחרונה ${ago(lf.end||lf.t)}`,ld&&`החתלה אחרונה ${ago(ld.t)}`].filter(Boolean).join(' · ');
+
+  if($('#history').classList.contains('show'))renderHistory();
+  if($('#stats').classList.contains('show'))renderStats();
+}
+function timerBtn(type,btn,lab,sub,idle,run){
+  const r=state.timers[type];
+  $(btn).classList.toggle('running',!!r);
+  $(lab).textContent=r?run:idle;
+  if(r)$(sub).textContent=`מ-${hm(r.t)} · ${dur(Date.now()-r.t)}`;
+  else if(type!=='breast'){const l=last(type);$(sub).textContent=l?`אחרון: ${dur(l.end-l.t)}`:'';}
+}
+const sorted=()=>[...state.entries].sort((a,b)=>b.t-a.t);
+const last=type=>sorted().find(e=>e.type===type);
+const lastOf=types=>sorted().find(e=>types.includes(e.type));
+
+let filter='all';
+const FILTERS=[['all','הכול'],['feed','האכלה'],['diaper','החתלה'],['sleep','שינה'],['tummy','זמן בטן'],['med','תרופות']];
+const FMAP={feed:['breast','bottle'],diaper:['pee','poo','both'],sleep:['sleep'],tummy:['tummy'],med:['med']};
+function renderHistory(){
+  $('#filters').innerHTML='';
+  FILTERS.forEach(([k,n])=>{const b=document.createElement('button');b.textContent=n;b.className=filter===k?'sel':'';
+    b.onclick=()=>{filter=k;renderHistory();};$('#filters').appendChild(b);});
+  const list=sorted().filter(e=>filter==='all'||FMAP[filter].includes(e.type));
+  const box=$('#histList');box.innerHTML='';
+  if(!list.length){box.innerHTML='<div class="empty">עוד אין תיעודים</div>';return;}
+  let cur='';
+  list.forEach(e=>{
+    const k=dayKey(e.t);
+    if(k!==cur){cur=k;const h=document.createElement('div');h.className='day';h.textContent=dayLabel(k);box.appendChild(h);}
+    const T=TYPES[e.type];const it=document.createElement('div');it.className='item';
+    it.innerHTML=`<div class="em" style="background:${T.bg}">${T.em}</div>
+      <div class="tx"><b>${T.name}</b><span></span></div><div class="tm">${hm(e.t)}</div>`;
+    it.querySelector('.tx span').textContent=describe(e);
+    it.onclick=()=>openEdit(e.id);
+    box.appendChild(it);
+  });
+}
+let statRange=7;
+function renderStats(){
+  const rb=$('#rangebar');rb.innerHTML='';
+  const first=state.entries.length?Math.min(...state.entries.map(e=>e.t)):Date.now();
+  const allDays=Math.floor((new Date().setHours(23,59,59)-first)/864e5)+1;
+  [[7,'שבוע'],[30,'חודש'],[0,'הכול']].forEach(([n,l])=>{const b=document.createElement('button');b.textContent=l;
+    b.className=statRange===n?'sel':'';b.onclick=()=>{statRange=n;renderStats();};rb.appendChild(b);});
+  const days=statRange||allDays;
+  const rows=[];
+  for(let i=0;i<days;i++){
+    const k=dayKey(Date.now()-i*864e5);const es=state.entries.filter(e=>dayKey(e.t)===k);
+    const n=t=>es.filter(e=>t.includes(e.type)).length;
+    rows.push(`<div class="card"><h3>${dayLabel(k)}</h3><div class="note">
+      🤱 ${n(['breast'])} הנקות · 🍼 ${n(['bottle'])} בקבוקים (${es.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0)} מ״ל)<br>
+      💧 ${n(['pee','both'])} פיפי · 💩 ${n(['poo','both'])} קקי<br>
+      😴 ${(es.filter(e=>e.type==='sleep'&&e.end).reduce((a,e)=>a+e.end-e.t,0)/36e5).toFixed(1)} שעות שינה · 🧸 ${dur(es.filter(e=>e.type==='tummy'&&e.end).reduce((a,e)=>a+e.end-e.t,0))} בטן · 💊 ${n(['med'])} תרופות
+      </div></div>`);
+  }
+  $('#statsBody').innerHTML=rows.join('');
+}
+setInterval(render,30000);
+
+/* ================= settings ================= */
+function fillSettings(){
+  $('#setName').value=state.profile.name;$('#setBirth').value=state.profile.birth;
+  $('#setEmail').value=state.alerts.email||'';
+  $('#setFeedHours').value=String(state.alerts.feedHours||0);
+  const sm=$('#savedMeds');sm.innerHTML='';
+  state.meds.forEach((m,i)=>{const b=document.createElement('button');b.textContent=m.name+' ✕';
+    b.onclick=()=>{state.meds.splice(i,1);state.medsMod=Date.now();save();fillSettings();};sm.appendChild(b);});
+  if(!state.meds.length)sm.innerHTML='<span class="note">אין עדיין</span>';
+  driveUI();
+}
+$('#saveProfile').onclick=()=>{state.profile.name=$('#setName').value.trim();state.profile.birth=$('#setBirth').value;state.profileMod=Date.now();save();toast('נשמר ✓');};
+$('#saveAlerts').onclick=()=>{
+  state.alerts={email:$('#setEmail').value.trim(),feedHours:+$('#setFeedHours').value,mod:Date.now()};
+  save();toast(localStorage.getItem('babylog.driveOn')?'הגדרות ההתראה נשמרו ✓':'נשמר. כדי שהשרת יקבל אותן, התחברו לגוגל דרייב');
+};
+$('#wipe').onclick=()=>{if(confirm('למחוק את כל התיעודים מהמכשיר? (הגיבוי בדרייב לא יימחק עד הסנכרון הבא)')){
+  state.deleted.push(...state.entries.map(e=>e.id));state.entries=[];save();}};
+function csv(){
+  const head='תאריך,שעה,סוג,פרטים\n';
+  const body=sorted().map(e=>{const d=new Date(e.t);return [d.toLocaleDateString('he-IL'),hm(e.t),TYPES[e.type].name,'"'+describe(e).replace(/"/g,'""')+'"'].join(',');}).join('\n');
+  const blob=new Blob(['﻿'+head+body],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='baby-log.csv';a.click();
+}
+$('#exportCsv').onclick=csv;$('#exportBtn').onclick=csv;
+
+/* ================= Drive sync via the Apps Script server ================= */
+let syncTimer=null,syncing=false,syncAgain=false;
+const srv=()=>({url:localStorage.getItem('babylog.url')||'',key:localStorage.getItem('babylog.key')||''});
+const connected=()=>!!localStorage.getItem('babylog.driveOn');
+function setDot(s){$('#syncDot').className='dot '+(s||'');}
+function driveUI(){
+  const t=localStorage.getItem('babylog.lastSync'),acc=localStorage.getItem('babylog.account');
+  $('#driveStatus').textContent=connected()
+    ?`מחובר ✓ לדרייב של ${acc||'החשבון'}${t?' · סנכרון אחרון '+new Date(+t).toLocaleString('he-IL'):''}`
+    :'לא מחובר — הנתונים נשמרים רק במכשיר';
+  if($('#setUrl')){$('#setUrl').value=srv().url;$('#setKey').value=srv().key;}
+}
+async function call(action,payload={}){
+  const {url,key}=srv();
+  if(!url||!key)throw new Error('חסרים כתובת שרת או קוד');
+  // text/plain avoids a CORS preflight, which Apps Script does not answer
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key,action,...payload})});
+  if(!r.ok)throw new Error('http '+r.status);
+  let j;try{j=await r.json();}catch(e){throw new Error('השרת לא החזיר נתונים — בדקו שהפריסה היא "Anyone"');}
+  if(!j.ok)throw new Error(j.error||'שגיאת שרת');
+  return j;
+}
+function merge(remote){
+  if(!remote||!remote.entries)return;
+  const del=new Set([...(state.deleted||[]),...(remote.deleted||[])]);
+  const map=new Map();
+  [...remote.entries,...state.entries].forEach(e=>{const o=map.get(e.id);if(!o||(e.mod||0)>=(o.mod||0))map.set(e.id,e);});
+  state.entries=[...map.values()].filter(e=>!del.has(e.id));
+  state.deleted=[...del].slice(-5000);
+  const rm=new Map();
+  [...(remote.reminders||[]),...(state.reminders||[])].forEach(r=>{const o=rm.get(r.id);if(!o||(r.mod||0)>=(o.mod||0))rm.set(r.id,r);});
+  state.reminders=[...rm.values()];
+  if((remote.alerts?.mod||0)>(state.alerts?.mod||0))state.alerts=remote.alerts;
+  if((remote.profileMod||0)>(state.profileMod||0)){state.profile=remote.profile;state.profileMod=remote.profileMod;}
+  if((remote.medsMod||0)>(state.medsMod||0)){state.meds=remote.meds;state.medsMod=remote.medsMod;}
+  if((remote.timersMod||0)>(state.timersMod||0)){state.timers=remote.timers||{};state.timersMod=remote.timersMod;}
+  armLocal();
+}
+async function sync(interactive=false){
+  if(!connected()&&!interactive)return;
+  if(syncing){syncAgain=true;return;}
+  syncing=true;setDot('busy');
+  try{
+    const j=await call('sync',{data:state});
+    merge(j.data);
+    localStorage.setItem('babylog.lastSync',Date.now());
+    save(false);setDot('on');driveUI();
+    if(interactive)toast('סונכרן עם הדרייב ✓');
+  }catch(e){
+    console.warn('sync',e);setDot('err');
+    if(interactive)toast('הסנכרון נכשל: '+e.message);
+  }finally{syncing=false;if(syncAgain){syncAgain=false;scheduleSync();}}
+}
+function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(false),1500);}
+$('#connectDrive').onclick=async()=>{
+  const url=$('#setUrl').value.trim(),key=$('#setKey').value.trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)){toast('הכתובת צריכה להתחיל ב-script.google.com ולהסתיים ב-/exec');return;}
+  if(!key){toast('הזינו את קוד הגישה');return;}
+  localStorage.setItem('babylog.url',url);localStorage.setItem('babylog.key',key);
+  setDot('busy');
+  try{
+    const j=await call('ping');
+    localStorage.setItem('babylog.account',j.account||'');
+    localStorage.setItem('babylog.driveOn','1');
+    toast(`מחובר לדרייב של ${j.account} · ${j.entries} תיעודים בשרת`);
+    await sync(false);
+  }catch(e){setDot('err');localStorage.removeItem('babylog.driveOn');toast('החיבור נכשל: '+e.message);}
+  driveUI();
+};
+$('#syncNow').onclick=()=>sync(true);
+$('#syncBtn').onclick=()=>connected()?sync(true):go('settings');
+$('#disconnectDrive').onclick=()=>{
+  ['babylog.driveOn','babylog.account','babylog.lastSync'].forEach(k=>localStorage.removeItem(k));
+  setDot('');driveUI();toast('נותק. הנתונים נשארים במכשיר ובדרייב');
+};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync(false);});
+window.addEventListener('online',()=>sync(false));
+setInterval(()=>{if(!document.hidden)sync(false);},60000); // pick up the other parent's changes
+if(connected())setTimeout(()=>sync(false),300);
+
+/* ================= PWA ================= */
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();armLocal();
+</script>
+</body>
+</html>
