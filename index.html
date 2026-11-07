@@ -45,6 +45,10 @@ input,select{font:inherit}
 .who .age{color:var(--blue);font-size:19px}
 .vitwarn{display:block;width:100%;margin:-8px 0 14px;padding:10px 14px;border-radius:14px;background:#fff1e6;border:1.5px solid #f6c9a4;color:#9a3d0a;font-size:15px;font-weight:500;text-align:center}
 .vitwarn[hidden]{display:none}
+.nextfeed{margin:-6px 0 14px;padding:10px 14px;border-radius:14px;background:#eef4ff;border:1.5px solid #c9d9fb;color:#24408e;font-size:15px;text-align:center}
+.nextfeed b{font-size:17px}
+.nextfeed.late{background:#fdeeee;border-color:#f3c2c2;color:#a12a2a}
+.nextfeed[hidden]{display:none}
 .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;font-size:15px}
 .switch input{width:22px;height:22px;flex-shrink:0}
 .sync{width:64px;height:64px;border-radius:50%;background:#fff;border:3px solid #cddcf7;position:relative;
@@ -193,6 +197,7 @@ label.check input{width:20px;height:20px;margin:0}
     <div class="avatar"><div><span class="face">👶</span><span id="avatarText"></span></div></div>
   </div>
   <button class="vitwarn" id="vitWarn" hidden></button>
+  <div class="nextfeed" id="nextFeed" hidden></div>
 
   <div class="board">
     <div class="grid">
@@ -324,6 +329,16 @@ label.check input{width:20px;height:20px;margin:0}
       <option value="3">3 שעות</option><option value="3.5">3.5 שעות</option><option value="4">4 שעות</option><option value="5">5 שעות</option>
     </select>
     <button class="btn" id="saveAlerts">שמירת הגדרות התראה</button>
+  </div>
+  <div class="card">
+    <h3>זמן האכלה הבא</h3>
+    <label>רווח בין האכלות (מתחילת ההאכלה האחרונה)</label>
+    <select id="setFeedEvery">
+      <option value="0">לא להציג</option><option value="2">שעתיים</option><option value="2.5">שעתיים וחצי</option>
+      <option value="3">3 שעות</option><option value="3.5">3.5 שעות</option><option value="4">4 שעות</option>
+      <option value="4.5">4.5 שעות</option><option value="5">5 שעות</option>
+    </select>
+    <p class="note">ההגדרה משותפת לכל הטלפונים שמחוברים לשרת.</p>
   </div>
   <div class="card">
     <h3>תזכורת ויטמינים</h3>
@@ -650,6 +665,7 @@ function render(){
   else $('#babyAge').textContent='הגדירו תאריך לידה ⚙️';
   $('#countBadge').textContent=state.entries.length>99?'+99':state.entries.length;
   renderVitWarn();
+  renderNextFeed();
 
   renderSides();
   if($('#bottleSession'))renderBottleSession();
@@ -683,6 +699,22 @@ function timerBtn(type,btn,lab,sub,idle,run){
   if(r)$(sub).textContent=`מ-${hm(r.t)} · ${dur(Date.now()-r.t)}`;
   else if(type!=='breast'){const l=last(type);$(sub).textContent=l?`אחרון: ${dur(l.end-l.t)}`:'';}
 }
+/* next feeding = start of the last feeding (breast or bottle) + interval */
+function feedEvery(){const v=state.profile&&state.profile.feedEvery;return v===undefined?4:+v;}
+function renderNextFeed(){
+  const el=$('#nextFeed');if(!el)return;
+  const every=feedEvery();
+  const running=['breast','bottle'].map(k=>state.timers[k]).filter(Boolean).sort((a,b)=>b.t-a.t)[0];
+  const lastF=lastOf(['breast','bottle']);
+  const start=Math.max(running?running.t:0,lastF?lastF.t:0);
+  if(!every||!start){el.hidden=true;return;}
+  const next=start+every*36e5,left=next-Date.now();
+  el.hidden=false;el.classList.toggle('late',left<0);
+  el.innerHTML=left>=0
+    ?`🍼 האכלה הבאה: <b>${hm(next)}</b> · בעוד ${dur(left)}`
+    :`🍼 האכלה הבאה הייתה ב-<b>${hm(next)}</b> · לפני ${dur(-left)}`;
+}
+
 /* daily vitamins banner: iron + vitamin D */
 const VITS=[['ברזל',m=>/ברזל/.test(m)],['ויטמין D',m=>/ויטמין\s*d/i.test(m)]];
 function vitWarnOn(){try{return localStorage.getItem('babylog.vitWarn')!=='0';}catch(e){return true;}}
@@ -788,6 +820,7 @@ setInterval(()=>{
 
 /* ================= settings ================= */
 function fillSettings(){
+  $('#setFeedEvery').value=String(feedEvery());
   $('#setVitWarn').checked=vitWarnOn();
   $('#setName').value=state.profile.name;$('#setBirth').value=state.profile.birth;
   $('#setEmail').value=state.alerts.email||'';
@@ -798,6 +831,8 @@ function fillSettings(){
   if(!state.meds.length)sm.innerHTML='<span class="note">אין עדיין</span>';
   driveUI();
 }
+$('#setFeedEvery').onchange=e=>{state.profile={...state.profile,feedEvery:+e.target.value};state.profileMod=Date.now();save();
+  toast(+e.target.value?`האכלה הבאה תחושב ${dur(+e.target.value*36e5)} מתחילת האכלה`:'זמן האכלה הבא לא יוצג');};
 $('#setVitWarn').onchange=e=>{try{localStorage.setItem('babylog.vitWarn',e.target.checked?'1':'0');}catch(_){}render();
   toast(e.target.checked?'תזכורת הוויטמינים פעילה':'תזכורת הוויטמינים כבויה');};
 $('#saveProfile').onclick=()=>{state.profile.name=$('#setName').value.trim();state.profile.birth=$('#setBirth').value;state.profileMod=Date.now();save();toast('נשמר ✓');};
