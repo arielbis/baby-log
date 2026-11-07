@@ -78,6 +78,13 @@ input,select{font:inherit}
 .bottle .add{flex:1;background:var(--tea-btn);color:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:500}
 .bottle .presets{display:flex;gap:4px}
 .bottle .presets button{flex:1;border:1px solid var(--tea-line);background:#fff;border-radius:10px;font-size:12px;padding:4px 0;color:var(--tea-ink)}
+.bottle .ml{flex:0 0 auto;min-height:46px}
+.bottle .session{border:1.5px solid var(--tea-line);background:#fff;border-radius:14px;padding:8px 4px;color:var(--tea-ink);font-size:15px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bottle .session small{font-size:12px;font-weight:400;opacity:.8;direction:ltr}
+.bottle .session.running{background:var(--tea-btn);color:#fff;border-color:var(--tea-btn)}
+.clock{font-size:34px;font-weight:700;text-align:center;direction:ltr;color:var(--tea-ink);margin:4px 0 8px}
+.mlpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.mlpick button{flex:1;min-width:54px;border:1px solid var(--tea-line);background:#f3fbf9;border-radius:12px;padding:8px 0;color:var(--tea-ink)}
 .tummy{background:var(--grn-bg);color:var(--grn-ink)} .tummy .big{background:var(--grn-btn);border-color:var(--grn-line)}
 .meds{background:var(--gry-bg);color:var(--gry-ink)} .meds .big{background:var(--gry-btn);border-color:var(--gry-line)}
 .pump{background:#fdf3ec;color:#8a3b12}
@@ -193,6 +200,7 @@ label.check input{width:20px;height:20px;margin:0}
           <input id="mlInput" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="400">
           <button class="add" id="bottleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M10 2h4M10 2v3l-2 3v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8 12h8"/></svg>הוספה</button>
         </div>
+        <button class="session" id="bottleSession"><span id="bsLabel">▶ התחלת האכלה</span><small id="bsSub"></small></button>
       </div>
 
       <div class="tile diaper">
@@ -325,6 +333,17 @@ label.check input{width:20px;height:20px;margin:0}
 </section>
 
 <!-- ===== SHEETS ===== -->
+<div class="overlay" id="bottleEndSheet"><div class="sheet">
+  <h3>סיום האכלה בבקבוק</h3>
+  <div class="clock" id="beClock">00:00</div>
+  <label>כמה מ״ל התינוק/ת אכל/ה?</label>
+  <input id="beMl" type="number" inputmode="numeric" min="1" max="400" placeholder="מ״ל">
+  <div class="mlpick"><button data-beml="30">30</button><button data-beml="60">60</button><button data-beml="90">90</button><button data-beml="120">120</button><button data-beml="150">150</button></div>
+  <button class="btn" id="beSave">שמירה</button>
+  <button class="btn sec" id="beBack">חזרה (הטיימר ממשיך)</button>
+  <button class="btn danger" id="beDiscard">ביטול הסשן בלי לשמור</button>
+</div></div>
+
 <div class="overlay" id="medSheet"><div class="sheet">
   <h3>מתן תרופה</h3>
   <div class="medchips" id="medQuick"></div>
@@ -513,7 +532,7 @@ const TIMED=['breast','sleep','tummy'];
 const toLocal=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
 function editFields(){
   const t=$('#editType').value;
-  const show={end:TIMED.includes(t),side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
+  const show={end:TIMED.includes(t)||t==='bottle',side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
   $$('#editSheet [data-f]').forEach(el=>el.style.display=show[el.dataset.f]?'':'none');
   $('#lblStart').textContent=TIMED.includes(t)?'שעת התחלה':'שעה';
 }
@@ -544,6 +563,11 @@ $('#editSave').onclick=()=>{
   if(TIMED.includes(type)){
     const end=new Date($('#editEnd').value).getTime();
     if(!end||end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
+    e.end=end;
+  }
+  if(type==='bottle'&&$('#editEnd').value){   // bottle session: end time is optional
+    const end=new Date($('#editEnd').value).getTime();
+    if(end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
     e.end=end;
   }
   if((type==='breast'||type==='pump')&&$('#editSide').value)e.side=$('#editSide').value;
@@ -617,6 +641,7 @@ function render(){
   $('#countBadge').textContent=state.entries.length>99?'+99':state.entries.length;
 
   renderSides();
+  if($('#bottleSession'))renderBottleSession();
   timerBtn('breast','#feedBtn','#feedLabel','#feedSub','הנקה','סיום הנקה');
   timerBtn('sleep','#sleepBtn','#sleepLabel','#sleepSub','נרדם/ה','התעורר/ה');
   timerBtn('tummy','#tummyBtn','#tummyLabel','#tummySub','התחלה','סיום');
@@ -694,6 +719,48 @@ function renderStats(){
   $('#statsBody').innerHTML=rows.join('');
 }
 setInterval(render,30000);
+
+/* ================= bottle feeding session ================= */
+const clock=ms=>{const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60);return (h?h+':'+pad(m):pad(m))+':'+pad(s%60);};
+function renderBottleSession(){
+  const r=state.timers.bottle;
+  $('#bottleSession').classList.toggle('running',!!r);
+  $('#bsLabel').textContent=r?'■ סיום האכלה':'▶ התחלת האכלה';
+  $('#bsSub').textContent=r?clock(Date.now()-r.t):'';
+  if(r&&$('#bottleEndSheet').classList.contains('show'))$('#beClock').textContent=clock(Date.now()-r.t);
+}
+$('#bottleSession').onclick=()=>{
+  if(!state.timers.bottle){
+    state.timers.bottle={t:Date.now(),extra:{}};state.timersMod=Date.now();save();
+    toast('🍼 האכלה בבקבוק התחילה',()=>{delete state.timers.bottle;state.timersMod=Date.now();save();});
+  }else{
+    $('#beMl').value='';$('#beClock').textContent=clock(Date.now()-state.timers.bottle.t);
+    $('#bottleEndSheet').classList.add('show');setTimeout(()=>$('#beMl').focus(),100);
+  }
+  if(navigator.vibrate)navigator.vibrate(30);
+};
+$$('[data-beml]').forEach(b=>b.onclick=()=>{$('#beMl').value=b.dataset.beml;});
+$('#beBack').onclick=()=>$('#bottleEndSheet').classList.remove('show');
+$('#beSave').onclick=()=>{
+  const r=state.timers.bottle;if(!r){$('#bottleEndSheet').classList.remove('show');return;}
+  const ml=parseInt($('#beMl').value,10);
+  if(!ml||ml<1){$('#beMl').focus();toast('הזינו כמה מ״ל');return;}
+  delete state.timers.bottle;state.timersMod=Date.now();
+  const e={id:uid(),type:'bottle',t:r.t,end:Date.now(),ml,mod:Date.now()};
+  state.entries.push(e);$('#bottleEndSheet').classList.remove('show');save();
+  toast(`🍼 בקבוק ${ml} מ״ל · ${dur(e.end-e.t)}`,()=>{state.timers.bottle=r;state.timersMod=Date.now();removeEntry(e.id);});
+};
+$('#beDiscard').onclick=()=>{
+  const r=state.timers.bottle;delete state.timers.bottle;state.timersMod=Date.now();
+  $('#bottleEndSheet').classList.remove('show');save();
+  toast('הסשן בוטל',()=>{state.timers.bottle=r;state.timersMod=Date.now();save();});
+};
+// live clocks for every running timer, once a second
+setInterval(()=>{
+  renderBottleSession();
+  [['breast','#feedSub'],['sleep','#sleepSub'],['tummy','#tummySub']].forEach(([k,s])=>{
+    const r=state.timers[k];if(r)$(s).textContent=`מ-${hm(r.t)} · ${clock(Date.now()-r.t)}`;});
+},1000);
 
 /* ================= settings ================= */
 function fillSettings(){
