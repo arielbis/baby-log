@@ -685,7 +685,8 @@ function csv(){
 $('#exportCsv').onclick=csv;$('#exportBtn').onclick=csv;
 
 /* ================= Drive sync via the Apps Script server ================= */
-let syncTimer=null,syncing=false,syncAgain=false;
+let syncTimer=null,syncing=false,syncAgain=false,dirty=false;
+let lastVer=localStorage.getItem('babylog.ver')||'';
 const srv=()=>({url:localStorage.getItem('babylog.url')||'',key:localStorage.getItem('babylog.key')||''});
 const connected=()=>!!localStorage.getItem('babylog.driveOn');
 function setDot(s){$('#syncDot').className='dot '+(s||'');}
@@ -725,19 +726,20 @@ function merge(remote){
 async function sync(interactive=false){
   if(!connected()&&!interactive)return;
   if(syncing){syncAgain=true;return;}
-  syncing=true;setDot('busy');
+  syncing=true;setDot('busy');dirty=false;
   try{
     const j=await call('sync',{data:state});
     merge(j.data);
+    if(j.version){lastVer=j.version;localStorage.setItem('babylog.ver',lastVer);}
     localStorage.setItem('babylog.lastSync',Date.now());
     save(false);setDot('on');driveUI();
     if(interactive)toast('סונכרן עם הדרייב ✓');
   }catch(e){
-    console.warn('sync',e);setDot('err');
+    console.warn('sync',e);setDot('err');dirty=true;
     if(interactive)toast('הסנכרון נכשל: '+e.message);
   }finally{syncing=false;if(syncAgain){syncAgain=false;scheduleSync();}}
 }
-function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(false),1500);}
+function scheduleSync(){dirty=true;clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(false),500);}
 $('#connectDrive').onclick=async()=>{
   const url=$('#setUrl').value.trim(),key=$('#setKey').value.trim();
   if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)){toast('הכתובת צריכה להתחיל ב-script.google.com ולהסתיים ב-/exec');return;}
@@ -761,7 +763,14 @@ $('#disconnectDrive').onclick=()=>{
 };
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync(false);});
 window.addEventListener('online',()=>sync(false));
-setInterval(()=>{if(!document.hidden)sync(false);},60000); // pick up the other parent's changes
+// every 10s ask the server only whether anything changed; do a full sync only if so
+async function poll(){
+  if(!connected()||document.hidden||syncing)return;
+  if(dirty)return sync(false);
+  try{const j=await call('version');if(j.version&&j.version!==lastVer)sync(false);else setDot('on');}
+  catch(e){setDot('err');}
+}
+setInterval(poll,10000);
 if(connected())setTimeout(()=>sync(false),300);
 
 /* ================= PWA ================= */
