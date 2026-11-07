@@ -80,6 +80,17 @@ input,select{font:inherit}
 .bottle .presets button{flex:1;border:1px solid var(--tea-line);background:#fff;border-radius:10px;font-size:12px;padding:4px 0;color:var(--tea-ink)}
 .tummy{background:var(--grn-bg);color:var(--grn-ink)} .tummy .big{background:var(--grn-btn);border-color:var(--grn-line)}
 .meds{background:var(--gry-bg);color:var(--gry-ink)} .meds .big{background:var(--gry-btn);border-color:var(--gry-line)}
+.pump{background:#fdf3ec;color:#8a3b12}
+.pump .sides{display:flex;gap:6px}
+.pump .sides button{flex:1;border-radius:12px;border:1.5px solid #f3cfb6;background:#fff;padding:6px 0;font-size:13px}
+.pump .sides button.sel{background:#8a3b12;color:#fff;border-color:#8a3b12}
+.pump .ml{display:flex;gap:6px;flex:1}
+.pump input{width:50%;border:1.5px solid #f3cfb6;border-radius:14px;text-align:center;font-size:16px;background:#fff;color:#8a3b12;min-width:0}
+.pump .add{flex:1;background:#e9a37a;color:#fff;border-radius:14px;font-size:15px;font-weight:500}
+.wide2{grid-column:1 / -1;min-height:0}
+.meds .chip{background:var(--gry-btn);border-color:var(--gry-line);min-height:74px}
+.meds .chip b{font-weight:500}.meds .chip small{font-size:12px;opacity:.7}
+.medlast{text-align:center;font-size:12px;opacity:.7;min-height:14px}
 .running{animation:pulse 1.6s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(80,90,200,.12)}}
 
@@ -173,6 +184,17 @@ label.check input{width:20px;height:20px;margin:0}
 
   <div class="board">
     <div class="grid">
+      <div class="tile bottle">
+        <h2>בקבוק</h2>
+        <div class="presets">
+          <button data-ml="60">60</button><button data-ml="90">90</button><button data-ml="120">120</button><button data-ml="150">150</button>
+        </div>
+        <div class="ml">
+          <input id="mlInput" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="400">
+          <button class="add" id="bottleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M10 2h4M10 2v3l-2 3v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8 12h8"/></svg>הוספה</button>
+        </div>
+      </div>
+
       <div class="tile feed">
         <h2>האכלה · הנקה</h2>
         <div class="sides">
@@ -185,23 +207,25 @@ label.check input{width:20px;height:20px;margin:0}
         </button>
       </div>
 
+      <div class="tile pump">
+        <h2>שאיבה</h2>
+        <div class="sides" id="pumpSides">
+          <button data-pside="ימין">ימין</button>
+          <button data-pside="שמאל">שמאל</button>
+          <button data-pside="שניהם" class="sel">שניהם</button>
+        </div>
+        <div class="ml">
+          <input id="pumpMl" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="600">
+          <button class="add" id="pumpBtn">הוספה</button>
+        </div>
+      </div>
+
       <div class="tile diaper">
         <h2>החתלה</h2>
         <div class="row">
           <button class="chip" data-diaper="pee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.7s6 6.4 6 11.3a6 6 0 0 1-12 0c0-4.9 6-11.3 6-11.3z"/></svg>פיפי</button>
           <button class="chip" data-diaper="poo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9z"/></svg>קקי</button>
           <button class="chip" data-diaper="both"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9.9 4.6 12 2l2.1 2.6L17 3.5l-.3 3.3 3.3.3-1.1 2.9L21.5 12l-2.6 2.1 1.1 2.9-3.3.3.3 3.3-2.9-1.1L12 22l-2.1-2.6L7 20.5l.3-3.3-3.3-.3 1.1-2.9L2.5 12l2.6-2.1L4 7l3.3-.3L7 3.5z"/></svg>גם וגם</button>
-        </div>
-      </div>
-
-      <div class="tile bottle">
-        <h2>בקבוק</h2>
-        <div class="presets">
-          <button data-ml="60">60</button><button data-ml="90">90</button><button data-ml="120">120</button><button data-ml="150">150</button>
-        </div>
-        <div class="ml">
-          <input id="mlInput" type="number" inputmode="numeric" placeholder="מ״ל" min="1" max="400">
-          <button class="add" id="bottleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M10 2h4M10 2v3l-2 3v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8 12h8"/></svg>הוספה</button>
         </div>
       </div>
 
@@ -221,12 +245,14 @@ label.check input{width:20px;height:20px;margin:0}
         </button>
       </div>
 
-      <div class="tile meds">
+      <div class="tile meds wide2">
         <h2>תרופות</h2>
-        <button class="big" id="medBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="m8.5 8.5 7 7"/></svg>
-          <span>מתן תרופה</span><small id="medSub"></small>
-        </button>
+        <div class="row">
+          <button class="chip" data-qmed="ברזל" data-qdose="3 טיפות">💊<b>ברזל</b><small>3 טיפות</small></button>
+          <button class="chip" data-qmed="ויטמין D" data-qdose="2 טיפות">💊<b>ויטמין D</b><small>2 טיפות</small></button>
+          <button class="chip" id="medBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>תרופה אחרת</button>
+        </div>
+        <small class="medlast" id="medSub"></small>
       </div>
     </div>
 
@@ -312,13 +338,13 @@ label.check input{width:20px;height:20px;margin:0}
   <h3 id="editTitle">עריכת תיעוד</h3>
   <label>סוג</label>
   <select id="editType">
-    <option value="breast">הנקה</option><option value="bottle">בקבוק</option>
+    <option value="breast">הנקה</option><option value="bottle">בקבוק</option><option value="pump">שאיבה</option>
     <option value="pee">פיפי</option><option value="poo">קקי</option><option value="both">פיפי + קקי</option>
     <option value="sleep">שינה</option><option value="tummy">זמן בטן</option><option value="med">תרופה</option>
   </select>
   <label id="lblStart">שעה</label><input id="editTime" type="datetime-local">
   <div data-f="end"><label>שעת סיום</label><input id="editEnd" type="datetime-local"></div>
-  <div data-f="side"><label>צד</label><select id="editSide"><option value="">לא צוין</option><option>ימין</option><option>שמאל</option></select></div>
+  <div data-f="side"><label>צד</label><select id="editSide"><option value="">לא צוין</option><option>ימין</option><option>שמאל</option><option>שניהם</option></select></div>
   <div data-f="ml"><label>כמות (מ״ל)</label><input id="editMl" type="number" inputmode="numeric" min="1"></div>
   <div data-f="med"><label>שם התרופה</label><input id="editMed"><label>מינון</label><input id="editDose"></div>
   <label>הערה</label><input id="editNote" placeholder="הערה חופשית">
@@ -353,6 +379,7 @@ const TYPES={
   poo:{name:'קקי',em:'💩',bg:'#fdf0c8'},
   both:{name:'פיפי + קקי',em:'✨',bg:'#fdf0c8'},
   bottle:{name:'בקבוק',em:'🍼',bg:'#c9efe9'},
+  pump:{name:'שאיבה',em:'🥛',bg:'#fbe3d3'},
   sleep:{name:'שינה',em:'😴',bg:'#e1e5fb'},
   tummy:{name:'זמן בטן',em:'🧸',bg:'#ddf7e3'},
   med:{name:'תרופה',em:'💊',bg:'#eef0f4'}
@@ -376,7 +403,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function addEntry(type,extra={}){
   const e={id:uid(),type,t:Date.now(),mod:Date.now(),...extra};
   state.entries.push(e);save();
-  toast(`${TYPES[type].em} נרשם: ${TYPES[type].name}${extra.ml?' '+extra.ml+' מ״ל':''}`,()=>removeEntry(e.id));
+  toast(`${TYPES[type].em} נרשם: ${TYPES[type].name}${extra.med?' '+extra.med:''}${extra.ml?' '+extra.ml+' מ״ל':''}`,()=>removeEntry(e.id));
   if(navigator.vibrate)navigator.vibrate(30);
   return e;
 }
@@ -401,7 +428,7 @@ function dayLabel(k){
 }
 function describe(e){
   const p=[];
-  if(e.side)p.push('צד '+e.side);
+  if(e.side)p.push(e.side==='שניהם'?'שני הצדדים':'צד '+e.side);
   if(e.ml)p.push(e.ml+' מ״ל');
   if(e.end)p.push(dur(e.end-e.t)+' ('+hm(e.t)+'–'+hm(e.end)+')');
   if(e.med)p.push(e.med+(e.dose?' · '+e.dose:''));
@@ -456,6 +483,16 @@ $('#bottleBtn').onclick=()=>{
   if(!ml||ml<1){$('#mlInput').focus();toast('הזינו כמות במ״ל');return;}
   addEntry('bottle',{ml});$('#mlInput').value='';
 };
+// quick medicines: one tap logs name + dose
+$$('[data-qmed]').forEach(b=>b.onclick=()=>addEntry('med',{med:b.dataset.qmed,dose:b.dataset.qdose}));
+// pumping session: total ml + right / left / both
+let pside='שניהם';
+$$('[data-pside]').forEach(b=>b.onclick=()=>{pside=b.dataset.pside;$$('[data-pside]').forEach(x=>x.classList.toggle('sel',x===b));});
+$('#pumpBtn').onclick=()=>{
+  const ml=parseInt($('#pumpMl').value,10);
+  if(!ml||ml<1){$('#pumpMl').focus();toast('הזינו כמה מ״ל נשאבו');return;}
+  addEntry('pump',{ml,side:pside});$('#pumpMl').value='';
+};
 $('#medBtn').onclick=()=>{
   $('#medName').value='';$('#medDose').value='';
   $('#medQuick').innerHTML='';
@@ -476,7 +513,7 @@ const TIMED=['breast','sleep','tummy'];
 const toLocal=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
 function editFields(){
   const t=$('#editType').value;
-  const show={end:TIMED.includes(t),side:t==='breast',ml:t==='bottle',med:t==='med'};
+  const show={end:TIMED.includes(t),side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
   $$('#editSheet [data-f]').forEach(el=>el.style.display=show[el.dataset.f]?'':'none');
   $('#lblStart').textContent=TIMED.includes(t)?'שעת התחלה':'שעה';
 }
@@ -509,8 +546,8 @@ $('#editSave').onclick=()=>{
     if(!end||end<=t){toast('שעת הסיום צריכה להיות אחרי ההתחלה');return;}
     e.end=end;
   }
-  if(type==='breast'&&$('#editSide').value)e.side=$('#editSide').value;
-  if(type==='bottle'){const ml=parseInt($('#editMl').value,10);if(!ml){toast('הזינו כמות');return;}e.ml=ml;}
+  if((type==='breast'||type==='pump')&&$('#editSide').value)e.side=$('#editSide').value;
+  if(type==='bottle'||type==='pump'){const ml=parseInt($('#editMl').value,10);if(!ml){toast('הזינו כמות');return;}e.ml=ml;}
   if(type==='med'){e.med=$('#editMed').value.trim();if(!e.med){toast('הזינו שם תרופה');return;}if($('#editDose').value.trim())e.dose=$('#editDose').value.trim();}
   const note=$('#editNote').value.trim();if(note)e.note=note;
   const prev=editIsNew?null:{...editing};
@@ -585,7 +622,7 @@ function render(){
   timerBtn('tummy','#tummyBtn','#tummyLabel','#tummySub','התחלה','סיום');
   $('#tummyIcon').setAttribute('d',state.timers.tummy?'M6 4h4v16H6zM14 4h4v16h-4z':'M6 3l14 9-14 9z');
   if(!state.timers.breast){const lb=last('breast');$('#feedSub').textContent=lb?`אחרונה ${hm(lb.t)}${lb.side?' · '+lb.side:''}`:'';}
-  const lm=last('med');$('#medSub').textContent=lm?`${lm.med} · ${hm(lm.t)}`:'';
+  const lm=last('med');$('#medSub').textContent=lm?`אחרונה: ${lm.med} · ${hm(lm.t)}`:'';
 
   // today summary
   const tk=dayKey(Date.now());const today=state.entries.filter(e=>dayKey(e.t)===tk);
@@ -615,8 +652,8 @@ const last=type=>sorted().find(e=>e.type===type);
 const lastOf=types=>sorted().find(e=>types.includes(e.type));
 
 let filter='all';
-const FILTERS=[['all','הכול'],['feed','האכלה'],['diaper','החתלה'],['sleep','שינה'],['tummy','זמן בטן'],['med','תרופות']];
-const FMAP={feed:['breast','bottle'],diaper:['pee','poo','both'],sleep:['sleep'],tummy:['tummy'],med:['med']};
+const FILTERS=[['all','הכול'],['feed','האכלה'],['pump','שאיבה'],['diaper','החתלה'],['sleep','שינה'],['tummy','זמן בטן'],['med','תרופות']];
+const FMAP={pump:['pump'],feed:['breast','bottle'],diaper:['pee','poo','both'],sleep:['sleep'],tummy:['tummy'],med:['med']};
 function renderHistory(){
   $('#filters').innerHTML='';
   FILTERS.forEach(([k,n])=>{const b=document.createElement('button');b.textContent=n;b.className=filter===k?'sel':'';
@@ -649,7 +686,7 @@ function renderStats(){
     const k=dayKey(Date.now()-i*864e5);const es=state.entries.filter(e=>dayKey(e.t)===k);
     const n=t=>es.filter(e=>t.includes(e.type)).length;
     rows.push(`<div class="card"><h3>${dayLabel(k)}</h3><div class="note">
-      🤱 ${n(['breast'])} הנקות · 🍼 ${n(['bottle'])} בקבוקים (${es.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0)} מ״ל)<br>
+      🤱 ${n(['breast'])} הנקות · 🍼 ${n(['bottle'])} בקבוקים (${es.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0)} מ״ל) · 🥛 ${n(['pump'])} שאיבות (${es.filter(e=>e.type==='pump').reduce((a,e)=>a+e.ml,0)} מ״ל)<br>
       💧 ${n(['pee','both'])} פיפי · 💩 ${n(['poo','both'])} קקי<br>
       😴 ${(es.filter(e=>e.type==='sleep'&&e.end).reduce((a,e)=>a+e.end-e.t,0)/36e5).toFixed(1)} שעות שינה · 🧸 ${dur(es.filter(e=>e.type==='tummy'&&e.end).reduce((a,e)=>a+e.end-e.t,0))} בטן · 💊 ${n(['med'])} תרופות
       </div></div>`);
