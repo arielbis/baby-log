@@ -336,7 +336,7 @@ label.check input{width:20px;height:20px;margin:0}
     <p class="note">דורש חיבור לשרת. השרת בודק כל 5 דקות ושולח מייל גם כשהטלפון כבוי.</p>
     <label>כתובות מייל לקבלת התראות (אפשר כמה, מופרדות בפסיק)</label>
     <input id="setEmail" dir="ltr" type="text" placeholder="ריק = המייל של חשבון הגוגל">
-    <label>התראה אם לא הייתה האכלה במשך</label>
+    <label>התראה אם לא הייתה האכלה במשך (סוג ההאכלה לפי "לחשב מתחילת" למטה)</label>
     <select id="setFeedHours">
       <option value="0">כבוי</option><option value="2">שעתיים</option><option value="2.5">שעתיים וחצי</option>
       <option value="3">3 שעות</option><option value="3.5">3.5 שעות</option><option value="4">4 שעות</option><option value="5">5 שעות</option>
@@ -355,11 +355,11 @@ label.check input{width:20px;height:20px;margin:0}
     </select>
     <label>לחשב מתחילת</label>
     <select id="setFeedFrom">
-      <option value="both">הנקה או בקבוק (האחרון מביניהם)</option>
-      <option value="breast">הנקה בלבד</option>
       <option value="bottle">בקבוק בלבד</option>
+      <option value="breast">הנקה בלבד</option>
+      <option value="both">הנקה או בקבוק (האחרון מביניהם)</option>
     </select>
-    <p class="note">ההגדרות משותפות לכל הטלפונים שמחוברים לשרת.</p>
+    <p class="note">ההגדרות משותפות לכל הטלפונים, וחלות גם על המייל "לא הייתה האכלה".</p>
   </div>
   <div class="card">
     <h3>תזכורת ויטמינים</h3>
@@ -739,7 +739,7 @@ function timerBtn(type,btn,lab,sub,idle,run){
 }
 /* next feeding = start of the last feeding (breast or bottle) + interval */
 const FEED_FROM={both:['breast','bottle'],breast:['breast'],bottle:['bottle']};
-function feedFrom(){const v=state.profile&&state.profile.feedFrom;return FEED_FROM[v]?v:'both';}
+function feedFrom(){const v=state.profile&&state.profile.feedFrom;return FEED_FROM[v]?v:'bottle';}
 function feedEvery(){const v=state.profile&&state.profile.feedEvery;return v===undefined?4:+v;}
 function renderNextFeed(){
   const el=$('#nextFeed');if(!el)return;
