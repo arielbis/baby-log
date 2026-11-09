@@ -353,7 +353,13 @@ label.check input{width:20px;height:20px;margin:0}
       <option value="3">3 שעות</option><option value="3.5">3.5 שעות</option><option value="4">4 שעות</option>
       <option value="4.5">4.5 שעות</option><option value="5">5 שעות</option>
     </select>
-    <p class="note">ההגדרה משותפת לכל הטלפונים שמחוברים לשרת.</p>
+    <label>לחשב מתחילת</label>
+    <select id="setFeedFrom">
+      <option value="both">הנקה או בקבוק (האחרון מביניהם)</option>
+      <option value="breast">הנקה בלבד</option>
+      <option value="bottle">בקבוק בלבד</option>
+    </select>
+    <p class="note">ההגדרות משותפות לכל הטלפונים שמחוברים לשרת.</p>
   </div>
   <div class="card">
     <h3>תזכורת ויטמינים</h3>
@@ -732,18 +738,20 @@ function timerBtn(type,btn,lab,sub,idle,run){
   else if(type!=='breast'){const l=last(type);$(sub).textContent=l?`אחרון: ${dur(l.end-l.t)}`:'';}
 }
 /* next feeding = start of the last feeding (breast or bottle) + interval */
+const FEED_FROM={both:['breast','bottle'],breast:['breast'],bottle:['bottle']};
+function feedFrom(){const v=state.profile&&state.profile.feedFrom;return FEED_FROM[v]?v:'both';}
 function feedEvery(){const v=state.profile&&state.profile.feedEvery;return v===undefined?4:+v;}
 function renderNextFeed(){
   const el=$('#nextFeed');if(!el)return;
-  const every=feedEvery();
-  const running=['breast','bottle'].map(k=>state.timers[k]).filter(Boolean).sort((a,b)=>b.t-a.t)[0];
-  const lastF=lastOf(['breast','bottle']);
+  const every=feedEvery(),types=FEED_FROM[feedFrom()];
+  const running=types.map(k=>state.timers[k]).filter(Boolean).sort((a,b)=>b.t-a.t)[0];
+  const lastF=lastOf(types);
   const start=Math.max(running?running.t:0,lastF?lastF.t:0);
   if(!every||!start){el.hidden=true;return;}
   const next=start+every*36e5,left=next-Date.now();
   el.hidden=false;el.classList.toggle('late',left<0);
   el.innerHTML=left>=0
-    ?`🍼 האכלה הבאה: <b>${hm(next)}</b> · בעוד ${dur(left)}`
+    ?`🍼 האכלה הבאה: <b>${hm(next)}</b> · בעוד ${dur(left)}${{breast:' (מההנקה)',bottle:' (מהבקבוק)'}[feedFrom()]||''}`
     :`🍼 האכלה הבאה הייתה ב-<b>${hm(next)}</b> · לפני ${dur(-left)}`;
 }
 
@@ -926,6 +934,7 @@ setInterval(()=>{
 /* ================= settings ================= */
 function fillSettings(){
   $('#setFeedEvery').value=String(feedEvery());
+  $('#setFeedFrom').value=feedFrom();
   $('#setVitWarn').checked=vitWarnOn();
   $('#setName').value=state.profile.name;$('#setBirth').value=state.profile.birth;
   $('#setEmail').value=state.alerts.email||'';
@@ -937,6 +946,8 @@ function fillSettings(){
   if(!state.meds.length)sm.innerHTML='<span class="note">אין עדיין</span>';
   driveUI();
 }
+$('#setFeedFrom').onchange=e=>{state.profile={...state.profile,feedFrom:e.target.value};state.profileMod=Date.now();save();
+  toast({both:'האכלה הבאה תחושב מהנקה או בקבוק',breast:'האכלה הבאה תחושב מתחילת ההנקה',bottle:'האכלה הבאה תחושב מתחילת הבקבוק'}[e.target.value]);};
 $('#setFeedEvery').onchange=e=>{state.profile={...state.profile,feedEvery:+e.target.value};state.profileMod=Date.now();save();
   toast(+e.target.value?`האכלה הבאה תחושב ${dur(+e.target.value*36e5)} מתחילת האכלה`:'זמן האכלה הבא לא יוצג');};
 $('#setVitWarn').onchange=e=>{try{localStorage.setItem('babylog.vitWarn',e.target.checked?'1':'0');}catch(_){}render();
