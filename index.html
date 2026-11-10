@@ -355,9 +355,9 @@ label.check input{width:20px;height:20px;margin:0}
     </select>
     <label>לחשב מתחילת</label>
     <select id="setFeedFrom">
+      <option value="both">הנקה או בקבוק (האחרון מביניהם)</option>
       <option value="bottle">בקבוק בלבד</option>
       <option value="breast">הנקה בלבד</option>
-      <option value="both">הנקה או בקבוק (האחרון מביניהם)</option>
     </select>
     <p class="note">ההגדרות משותפות לכל הטלפונים, וחלות גם על המייל "לא הייתה האכלה".</p>
   </div>
@@ -379,6 +379,18 @@ label.check input{width:20px;height:20px;margin:0}
 </section>
 
 <!-- ===== SHEETS ===== -->
+<div class="overlay" id="breastEndSheet"><div class="sheet">
+  <h3>סיום הנקה</h3>
+  <div class="clock" id="brClock" style="color:var(--pink-ink)">00:00</div>
+  <p class="note" id="brInfo"></p>
+  <label>נתתם גם בקבוק? כמה מ״ל (לא חובה)</label>
+  <input id="brMl" type="number" inputmode="numeric" min="1" max="400" placeholder="ריק = רק הנקה">
+  <div class="mlpick"><button data-brml="20">20</button><button data-brml="30">30</button><button data-brml="60">60</button><button data-brml="90">90</button><button data-brml="120">120</button></div>
+  <button class="btn" id="brSave" style="background:var(--pink-ink)">שמירה</button>
+  <button class="btn sec" id="brBack">חזרה (הטיימר ממשיך)</button>
+  <button class="btn danger" id="brDiscard">ביטול הסשן בלי לשמור</button>
+</div></div>
+
 <div class="overlay" id="pumpEndSheet"><div class="sheet">
   <h3>סיום שאיבה</h3>
   <p class="note" id="peInfo"></p>
@@ -510,7 +522,7 @@ function dayLabel(k){
 function describe(e){
   const p=[];
   if(e.side)p.push(e.side==='שניהם'?'שני הצדדים':'צד '+e.side);
-  if(e.ml)p.push(e.ml+' מ״ל');
+  if(e.ml)p.push((e.type==='breast'?'בקבוק ':'')+e.ml+' מ״ל');
   if(e.end)p.push(dur(e.end-e.t)+' ('+hm(e.t)+'–'+hm(e.end)+')');
   if(e.med)p.push(e.med+(e.dose?' · '+e.dose:''));
   if(e.note)p.push(e.note);
@@ -538,7 +550,33 @@ $$('[data-side]').forEach(b=>b.onclick=()=>{side=side===b.dataset.side?'':b.data
 function renderSides(){$$('[data-side]').forEach(b=>b.classList.toggle('sel',b.dataset.side===side));}
 
 // breastfeeding: tap to start timer, tap again to stop & log
-$('#feedBtn').onclick=()=>toggleTimer('breast',{side});
+$('#feedBtn').onclick=()=>{
+  if(!state.timers.breast)return toggleTimer('breast',{side});
+  const r=state.timers.breast;
+  $('#brMl').value='';$('#brClock').textContent=clock(Date.now()-r.t);
+  $('#brInfo').textContent=`התחלה ${hm(r.t)}${side?' · צד '+side:''}`;
+  $('#breastEndSheet').classList.add('show');
+};
+$$('[data-brml]').forEach(b=>b.onclick=()=>{$('#brMl').value=b.dataset.brml;});
+$('#brBack').onclick=()=>$('#breastEndSheet').classList.remove('show');
+$('#brSave').onclick=()=>{
+  const r=state.timers.breast;if(!r){$('#breastEndSheet').classList.remove('show');return;}
+  const ml=parseInt($('#brMl').value,10);
+  delete state.timers.breast;state.timersMod=Date.now();
+  const e={id:uid(),type:'breast',t:r.t,end:Date.now(),mod:Date.now(),...r.extra};
+  if(side)e.side=side;else delete e.side;
+  if(ml>0)e.ml=ml;
+  state.entries.push(e);
+  if(e.side){state.lastSide=e.side;side=e.side==='ימין'?'שמאל':'ימין';}
+  $('#breastEndSheet').classList.remove('show');save();
+  toast(`🤱 הנקה: ${dur(e.end-e.t)}${e.ml?' + בקבוק '+e.ml+' מ״ל':''}`,()=>{state.timers.breast=r;state.timersMod=Date.now();removeEntry(e.id);});
+  if(navigator.vibrate)navigator.vibrate(30);
+};
+$('#brDiscard').onclick=()=>{
+  const r=state.timers.breast;delete state.timers.breast;state.timersMod=Date.now();
+  $('#breastEndSheet').classList.remove('show');save();
+  toast('סשן ההנקה בוטל',()=>{state.timers.breast=r;state.timersMod=Date.now();save();});
+};
 $('#sleepBtn').onclick=()=>toggleTimer('sleep');
 $('#tummyBtn').onclick=()=>toggleTimer('tummy');
 function toggleTimer(type,extra={}){
@@ -594,7 +632,7 @@ const TIMED=['breast','sleep','tummy'];
 const toLocal=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
 function editFields(){
   const t=$('#editType').value;
-  const show={end:TIMED.includes(t)||t==='bottle'||t==='pump',side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump',med:t==='med'};
+  const show={end:TIMED.includes(t)||t==='bottle'||t==='pump',side:t==='breast'||t==='pump',ml:t==='bottle'||t==='pump'||t==='breast',med:t==='med'};
   $$('#editSheet [data-f]').forEach(el=>el.style.display=show[el.dataset.f]?'':'none');
   $('#lblStart').textContent=TIMED.includes(t)?'שעת התחלה':'שעה';
 }
@@ -634,6 +672,7 @@ $('#editSave').onclick=()=>{
   }
   if((type==='breast'||type==='pump')&&$('#editSide').value)e.side=$('#editSide').value;
   if(type==='bottle'||type==='pump'){const ml=parseInt($('#editMl').value,10);if(!ml){toast('הזינו כמות');return;}e.ml=ml;}
+  if(type==='breast'){const ml=parseInt($('#editMl').value,10);if(ml>0)e.ml=ml;}   // optional bottle top-up
   if(type==='med'){e.med=$('#editMed').value.trim();if(!e.med){toast('הזינו שם תרופה');return;}if($('#editDose').value.trim())e.dose=$('#editDose').value.trim();}
   const note=$('#editNote').value.trim();if(note)e.note=note;
   const prev=editIsNew?null:{...editing};
@@ -717,7 +756,7 @@ function render(){
   // today summary
   const tk=dayKey(Date.now());const today=state.entries.filter(e=>dayKey(e.t)===tk);
   const c=t=>today.filter(e=>t.includes(e.type)).length;
-  const ml=today.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0);
+  const ml=today.filter(e=>e.type==='bottle'||e.type==='breast').reduce((a,e)=>a+(e.ml||0),0);
   const sl=today.filter(e=>e.type==='sleep'&&e.end).reduce((a,e)=>a+(e.end-e.t),0);
   $('#todaySummary').innerHTML=
     `<div><b>${c(['breast','bottle'])}</b><span>האכלות היום</span></div>`+
@@ -739,7 +778,7 @@ function timerBtn(type,btn,lab,sub,idle,run){
 }
 /* next feeding = start of the last feeding (breast or bottle) + interval */
 const FEED_FROM={both:['breast','bottle'],breast:['breast'],bottle:['bottle']};
-function feedFrom(){const v=state.profile&&state.profile.feedFrom;return FEED_FROM[v]?v:'bottle';}
+function feedFrom(){const v=state.profile&&state.profile.feedFrom;return FEED_FROM[v]?v:'both';}
 function feedEvery(){const v=state.profile&&state.profile.feedEvery;return v===undefined?4:+v;}
 function renderNextFeed(){
   const el=$('#nextFeed');if(!el)return;
@@ -807,7 +846,7 @@ function renderStats(){
     const k=dayKey(Date.now()-i*864e5);const es=state.entries.filter(e=>dayKey(e.t)===k);
     const n=t=>es.filter(e=>t.includes(e.type)).length;
     rows.push(`<div class="card"><h3>${dayLabel(k)}</h3><div class="note">
-      🤱 ${n(['breast'])} הנקות · 🍼 ${n(['bottle'])} בקבוקים (${es.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0)} מ״ל) · 🥛 ${n(['pump'])} שאיבות (${es.filter(e=>e.type==='pump').reduce((a,e)=>a+e.ml,0)} מ״ל)<br>
+      🤱 ${n(['breast'])} הנקות${(x=>x?` (+${x} מ״ל בקבוק)`:'')(es.filter(e=>e.type==='breast').reduce((a,e)=>a+(e.ml||0),0))} · 🍼 ${n(['bottle'])} בקבוקים (${es.filter(e=>e.type==='bottle').reduce((a,e)=>a+e.ml,0)} מ״ל) · 🥛 ${n(['pump'])} שאיבות (${es.filter(e=>e.type==='pump').reduce((a,e)=>a+e.ml,0)} מ״ל)<br>
       💧 ${n(['pee','both'])} פיפי · 💩 ${n(['poo','both'])} קקי<br>
       😴 ${(es.filter(e=>e.type==='sleep'&&e.end).reduce((a,e)=>a+e.end-e.t,0)/36e5).toFixed(1)} שעות שינה · 🧸 ${dur(es.filter(e=>e.type==='tummy'&&e.end).reduce((a,e)=>a+e.end-e.t,0))} בטן · 💊 ${n(['med'])} תרופות
       </div></div>`);
